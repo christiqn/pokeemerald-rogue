@@ -73,9 +73,10 @@ enum
     PAGE_MON_FORMS,
 
     PAGE_MON_RIDE_STATS,
+    PAGE_MON_TYPE_DEFENSES,
 
     PAGE_MON_FIRST = PAGE_MON_STATS,
-    PAGE_MON_LAST = PAGE_MON_RIDE_STATS,
+    PAGE_MON_LAST = PAGE_MON_TYPE_DEFENSES,
 };
 
 enum
@@ -167,7 +168,8 @@ static const u8 sTitle_Stats[] = _("Stats");
 static const u8 sTitle_Moves[] = _("Moves");
 static const u8 sTitle_Evolutions[] = _("Evolutions");
 static const u8 sTitle_Forms[] = _("Forms");
-static const u8 sTitle_Riding[] = _("Poké Ride Test2");
+static const u8 sTitle_Riding[] = _("Poké Ride");
+static const u8 sTitle_TypeDefenses[] = _("Type Defenses");
 
 static const u8 sText_Types[] = _("Types");
 static const u8 sText_Abilities[] = _("Abilities");
@@ -207,7 +209,8 @@ static const u8 sTitle_Stats[] = _("STATS");
 static const u8 sTitle_Moves[] = _("MOVES");
 static const u8 sTitle_Evolutions[] = _("EVOLUTIONS");
 static const u8 sTitle_Forms[] = _("FORMS");
-static const u8 sTitle_Riding[] = _("POKé RIDE Test");
+static const u8 sTitle_Riding[] = _("POKé RIDE");
+static const u8 sTitle_TypeDefenses[] = _("TYPE DEFENSES");
 
 static const u8 sText_Types[] = _("TYPES");
 static const u8 sText_Abilities[] = _("ABILITIES");
@@ -260,6 +263,7 @@ static void DisplayMonMovesText(void);
 static void DisplayMonEvosText(void);
 static void DisplayMonFormsText(void);
 static void DisplayMonRideStatsText(void);
+static void DisplayMonTypeDefenses(void);
 static void InitOverviewBg(void);
 static void InitMonEntryWindows(void);
 static void DestroyMonEntryWindows(void);
@@ -787,6 +791,20 @@ static void InitPageResources(u8 fromPage, u8 toPage)
         }
         break;
 
+    case PAGE_MON_TYPE_DEFENSES:
+        {
+            LZDecompressWram(sPageListsTilemap, sTilemapBufferPtr);
+            CopyBgTilemapBufferToVram(1);
+
+            InitMonEntryWindows();
+            // Text printed below
+
+            LoadMonIconPalettes();
+
+            MonInfo_CreateSprites(FALSE);
+        }
+        break;
+
     default:
         break;
     }
@@ -815,6 +833,7 @@ static void DestroyPageResources(u8 fromPage, u8 toPage)
     case PAGE_MON_EVOS:
     case PAGE_MON_FORMS:
     case PAGE_MON_RIDE_STATS:
+    case PAGE_MON_TYPE_DEFENSES:
         {
             MonInfo_DestroySprites();
             FreeMonIconPalettes();
@@ -929,6 +948,11 @@ static void Task_PageFadeIn(u8 taskId)
         DisplayMonRideStatsText();
         break;
 
+    case PAGE_MON_TYPE_DEFENSES:
+        DisplayMonEntryText();
+        DisplayMonRideStatsText();
+        break;
+
     default:
         break;
     }
@@ -984,6 +1008,10 @@ static void Task_PageWaitForKeyPress(u8 taskId)
         break;
 
     case PAGE_MON_RIDE_STATS:
+        MonRideStats_HandleInput(taskId);
+        break;
+
+    case PAGE_MON_TYPE_DEFENSES:
         MonRideStats_HandleInput(taskId);
         break;
     

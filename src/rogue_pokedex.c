@@ -73,7 +73,6 @@ enum
     PAGE_MON_FORMS,
 
     PAGE_MON_RIDE_STATS,
-    PAGE_MON_DEFENSES
 
     PAGE_MON_FIRST = PAGE_MON_STATS,
     PAGE_MON_LAST = PAGE_MON_RIDE_STATS,
@@ -168,8 +167,7 @@ static const u8 sTitle_Stats[] = _("Stats");
 static const u8 sTitle_Moves[] = _("Moves");
 static const u8 sTitle_Evolutions[] = _("Evolutions");
 static const u8 sTitle_Forms[] = _("Forms");
-static const u8 sTitle_Riding[] = _("Poké Ride");
-static const u8 sTitle_TypeDefenses[] = _("Type Defenses");
+static const u8 sTitle_Riding[] = _("Poké Ride Test2");
 
 static const u8 sText_Types[] = _("Types");
 static const u8 sText_Abilities[] = _("Abilities");
@@ -209,8 +207,7 @@ static const u8 sTitle_Stats[] = _("STATS");
 static const u8 sTitle_Moves[] = _("MOVES");
 static const u8 sTitle_Evolutions[] = _("EVOLUTIONS");
 static const u8 sTitle_Forms[] = _("FORMS");
-static const u8 sTitle_Riding[] = _("POKé RIDE");
-static const u8 sTitle_TypeDefenses[] = _("TYPE DEFENSES");
+static const u8 sTitle_Riding[] = _("POKé RIDE Test");
 
 static const u8 sText_Types[] = _("TYPES");
 static const u8 sText_Abilities[] = _("ABILITIES");
@@ -263,7 +260,6 @@ static void DisplayMonMovesText(void);
 static void DisplayMonEvosText(void);
 static void DisplayMonFormsText(void);
 static void DisplayMonRideStatsText(void);
-static void DisplayMonDefensesText(void);
 static void InitOverviewBg(void);
 static void InitMonEntryWindows(void);
 static void DestroyMonEntryWindows(void);
@@ -321,9 +317,6 @@ static void MonForms_CreateSprites();
 
 // Ride stats
 static void MonRideStats_HandleInput(u8);
-
-// Defenses stats
-static void MonDefenses_HandleInput(u8);
 
 struct PokedexMenu
 {
@@ -793,20 +786,6 @@ static void InitPageResources(u8 fromPage, u8 toPage)
             MonInfo_CreateSprites(FALSE);
         }
         break;
-    
-    case PAGE_MON_DEFENSES:
-        {
-            LZDecompressWram(sPageListsTilemap, sTilemapBufferPtr);
-            CopyBgTilemapBufferToVram(1);
-
-            InitMonEntryWindows();
-            // Text printed below
-
-            LoadMonIconPalettes();
-
-            MonInfo_CreateSprites(FALSE);
-        }
-        break;
 
     default:
         break;
@@ -836,7 +815,6 @@ static void DestroyPageResources(u8 fromPage, u8 toPage)
     case PAGE_MON_EVOS:
     case PAGE_MON_FORMS:
     case PAGE_MON_RIDE_STATS:
-    case PAGE_MON_DEFENSES:
         {
             MonInfo_DestroySprites();
             FreeMonIconPalettes();
@@ -951,11 +929,6 @@ static void Task_PageFadeIn(u8 taskId)
         DisplayMonRideStatsText();
         break;
 
-    case PAGE_MON_DEFENSES:
-        DisplayMonEntryText();
-        DisplayMonDefensesText();
-        break;
-
     default:
         break;
     }
@@ -1014,10 +987,6 @@ static void Task_PageWaitForKeyPress(u8 taskId)
         MonRideStats_HandleInput(taskId);
         break;
     
-    case PAGE_MON_DEFENSES:
-        MonDefenses_HandleInput(taskId);
-        break;
-
     default:
         break;
     }
@@ -2174,74 +2143,6 @@ static void DisplayMonFormsText()
 }
 
 static void DisplayMonRideStatsText()
-{
-    const u8 ySpacing = 16;
-    u8 headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
-    u8 statColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
-
-    AddTitleText(sTitle_Riding);
-
-    FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
-
-    if(Rogue_IsValidRideSpecies(sPokedexMenu->viewBaseSpecies))
-    {
-        u16 i;
-        u16 y = 0;
-        u8 skillCount = 0;
-
-        // Speed
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1 + ySpacing * y, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Speed);
-
-        StringCopy(gStringVar4, gText_EmptyString2);
-
-        for(i = 0; i < Rogue_GetRideSpeciesSpeedStars(sPokedexMenu->viewBaseSpecies); ++i)
-            StringAppend(gStringVar4, sText_RideStar);
-
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 40, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, gStringVar4);
-        ++y;
-
-        // Skills
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1 + ySpacing * y, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Skills);
-        ++y;
-
-        if(FlagGet(FLAG_SYS_RIDING_LEDGE_JUMP) && Rogue_IsValidRideClimbSpecies(sPokedexMenu->viewBaseSpecies))
-        {
-            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, sText_SkillClimbing);
-            ++y;
-            ++skillCount;
-        }
-
-        if(FlagGet(FLAG_SYS_RIDING_SURF) && Rogue_IsValidRideSwimSpecies(sPokedexMenu->viewBaseSpecies))
-        {
-            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, sText_SkillSurf);
-            ++y;
-            ++skillCount;
-        }
-
-        if(FlagGet(FLAG_SYS_RIDING_FLY) && Rogue_IsValidRideFlySpecies(sPokedexMenu->viewBaseSpecies))
-        {
-            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, sText_SkillFlying);
-            ++y;
-            ++skillCount;
-        }
-
-        if(skillCount == 0)
-        {
-            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, sText_SkillNone);
-            ++y;
-        }
-    }
-    else
-    {
-        u16 offset = GetStringCenterAlignXOffset(FONT_NARROW, sText_NoDataFound, sMonEntryWinTemplates[WIN_MON_PAGE_CONTENT].width * 8);
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, offset, 0, 0, 0, statColor, TEXT_SKIP_DRAW, sText_NoDataFound);
-    }
-
-    PutWindowTilemap(WIN_MON_PAGE_CONTENT);
-    CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
-}
-
-static void DisplayMonDefensesText()
 {
     const u8 ySpacing = 16;
     u8 headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
@@ -4207,11 +4108,6 @@ static void MonForms_CreateSprites()
 }
 
 static void MonRideStats_HandleInput(u8 taskId)
-{
-    MonInfo_HandleInput(taskId);
-}
-
-static void MonDefenses_HandleInput(u8 taskId)
 {
     MonInfo_HandleInput(taskId);
 }

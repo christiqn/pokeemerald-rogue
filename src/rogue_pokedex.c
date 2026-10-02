@@ -167,7 +167,7 @@ static const u8 sTitle_Stats[] = _("Stats");
 static const u8 sTitle_Moves[] = _("Moves");
 static const u8 sTitle_Evolutions[] = _("Evolutions");
 static const u8 sTitle_Forms[] = _("Forms");
-static const u8 sTitle_Riding[] = _("Poké Ride");
+static const u8 sTitle_Riding[] = _("Poké Ride Test2");
 
 static const u8 sText_Types[] = _("Types");
 static const u8 sText_Abilities[] = _("Abilities");
@@ -207,7 +207,7 @@ static const u8 sTitle_Stats[] = _("STATS");
 static const u8 sTitle_Moves[] = _("MOVES");
 static const u8 sTitle_Evolutions[] = _("EVOLUTIONS");
 static const u8 sTitle_Forms[] = _("FORMS");
-static const u8 sTitle_Riding[] = _("POKé RIDE");
+static const u8 sTitle_Riding[] = _("POKé RIDE Test");
 
 static const u8 sText_Types[] = _("TYPES");
 static const u8 sText_Abilities[] = _("ABILITIES");

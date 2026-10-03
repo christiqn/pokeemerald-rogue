@@ -189,6 +189,10 @@ static const u8 sText_SkillSurf[] = _("Surfing");
 static const u8 sText_SkillFlying[] = _("Flying");
 static const u8 sText_SkillNone[] = _("None");
 
+static const u8 sText_Weaknesses[] = _("Weaknesses");
+static const u8 sText_Resistances[] = _("Resistances");
+static const u8 sText_Immunities[] = _("Immunities");
+
 static const u8 sText_Base[] = _("{COLOR RED}{SHADOW LIGHT_RED}Base");
 static const u8 sText_Alolan[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}Alolan");
 static const u8 sText_Galarian[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}Galarian");

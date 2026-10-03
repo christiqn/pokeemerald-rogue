@@ -806,7 +806,7 @@ static void InitPageResources(u8 fromPage, u8 toPage)
 
             LoadMonIconPalettes();
 
-            MonInfo_CreateSprites(FALSE);
+            MonInfo_CreateSprites(TRUE);
         }
         break;
 
@@ -2245,7 +2245,7 @@ static void DisplayMonRideStatsText()
 
 static void DisplayMonTypeDefenses()
 {
-    u8 i;
+    u8 i = 0;
     const u8 ySpacing = 16;
     u8 const headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
     u8 const statColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
@@ -2261,17 +2261,13 @@ static void DisplayMonTypeDefenses()
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 1, 0, 0, statColor, TEXT_SKIP_DRAW, sText_Revised);
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 12, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
         
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 12, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Resistances);
-        
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 12, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Immunities);
+
     }
     else
     {
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
 
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Resistances);
 
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Immunities);
     }
 
 

@@ -2241,17 +2241,72 @@ static void DisplayMonRideStatsText()
 
 static void DisplayMonTypeDefenses()
 {
-    u8 i;
     const u8 ySpacing = 16;
-    u8 const headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
-    u8 const statColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
+    u8 headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
+    u8 statColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
 
     AddTitleText(sTitle_TypeDefenses);
 
     FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
 
-    //AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 35, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
-    
+    if(Rogue_IsValidRideSpecies(sPokedexMenu->viewBaseSpecies))
+    {
+        u16 i;
+        u16 y = 0;
+        u8 skillCount = 0;
+
+        // Speed
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1 + ySpacing * y, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1 + ySpacing * y, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Resistances);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1 + ySpacing * y, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Immunities);
+
+        StringCopy(gStringVar4, gText_EmptyString2);
+
+        // for(i = 0; i < Rogue_GetRideSpeciesSpeedStars(sPokedexMenu->viewBaseSpecies); ++i)
+        //     StringAppend(gStringVar4, sText_RideStar);
+
+        // AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 40, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, gStringVar4);
+        // ++y;
+
+        // // Skills
+        // AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1 + ySpacing * y, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Skills);
+        // ++y;
+
+        // if(FlagGet(FLAG_SYS_RIDING_LEDGE_JUMP) && Rogue_IsValidRideClimbSpecies(sPokedexMenu->viewBaseSpecies))
+        // {
+        //     AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, sText_SkillClimbing);
+        //     ++y;
+        //     ++skillCount;
+        // }
+
+        // if(FlagGet(FLAG_SYS_RIDING_SURF) && Rogue_IsValidRideSwimSpecies(sPokedexMenu->viewBaseSpecies))
+        // {
+        //     AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, sText_SkillSurf);
+        //     ++y;
+        //     ++skillCount;
+        // }
+
+        // if(FlagGet(FLAG_SYS_RIDING_FLY) && Rogue_IsValidRideFlySpecies(sPokedexMenu->viewBaseSpecies))
+        // {
+        //     AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, sText_SkillFlying);
+        //     ++y;
+        //     ++skillCount;
+        // }
+
+        // if(skillCount == 0)
+        // {
+        //     AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 1 + ySpacing * y, 0, 0, statColor, TEXT_SKIP_DRAW, sText_SkillNone);
+        //     ++y;
+        // }
+    }
+    else
+    {
+        u16 offset = GetStringCenterAlignXOffset(FONT_NARROW, sText_NoDataFound, sMonEntryWinTemplates[WIN_MON_PAGE_CONTENT].width * 8);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, offset, 0, 0, 0, statColor, TEXT_SKIP_DRAW, sText_NoDataFound);
+    }
+
+
+
 
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);

@@ -76,7 +76,7 @@ enum
     PAGE_MON_TYPE_DEFENSES,
 
     PAGE_MON_FIRST = PAGE_MON_STATS,
-    PAGE_MON_LAST = PAGE_MON_TYPE_DEFENSES,
+    PAGE_MON_LAST = PAGE_MON_TYPE_DEFENSES, //good
 };
 
 enum
@@ -791,6 +791,7 @@ static void InitPageResources(u8 fromPage, u8 toPage)
         }
         break;
 
+        // good
     case PAGE_MON_TYPE_DEFENSES:
         {
             LZDecompressWram(sPageListsTilemap, sTilemapBufferPtr);
@@ -833,7 +834,7 @@ static void DestroyPageResources(u8 fromPage, u8 toPage)
     case PAGE_MON_EVOS:
     case PAGE_MON_FORMS:
     case PAGE_MON_RIDE_STATS:
-    case PAGE_MON_TYPE_DEFENSES:
+    case PAGE_MON_TYPE_DEFENSES: // good
         {
             MonInfo_DestroySprites();
             FreeMonIconPalettes();
@@ -950,7 +951,7 @@ static void Task_PageFadeIn(u8 taskId)
 
     case PAGE_MON_TYPE_DEFENSES:
         DisplayMonEntryText();
-        DisplayMonRideStatsText();
+        DisplayMonTypeDefenses();  // todocq
         break;
 
     default:
@@ -1012,7 +1013,7 @@ static void Task_PageWaitForKeyPress(u8 taskId)
         break;
 
     case PAGE_MON_TYPE_DEFENSES:
-        MonRideStats_HandleInput(taskId);
+        MonRideStats_HandleInput(taskId);   // todocq
         break;
     
     default:
@@ -2236,6 +2237,11 @@ static void DisplayMonRideStatsText()
 
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
+}
+
+static void DisplayMonTypeDefenses()
+{
+    
 }
 
 static const struct BgTemplate sDiplomaBgTemplates[2] =

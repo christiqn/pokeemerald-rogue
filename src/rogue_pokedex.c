@@ -2241,7 +2241,20 @@ static void DisplayMonRideStatsText()
 
 static void DisplayMonTypeDefenses()
 {
+    u8 i;
+    const u8 ySpacing = 16;
+    u8 const headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
+    u8 const statColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
+
+    AddTitleText(sTitle_TypeDefenses);
+
+    FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
+
+    AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 35, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
     
+
+    PutWindowTilemap(WIN_MON_PAGE_CONTENT);
+    CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
 static const struct BgTemplate sDiplomaBgTemplates[2] =

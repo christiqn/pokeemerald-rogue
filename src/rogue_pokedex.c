@@ -2255,7 +2255,16 @@ static void DisplayMonTypeDefenses()
     FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
 
 
-
+    // Print types (Sprites display types setup later)
+    if(Rogue_HasSpeciesBeenRevised(sPokedexMenu->viewBaseSpecies, REVISION_FLAG_TYPING))
+    {
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 1, 0, 0, statColor, TEXT_SKIP_DRAW, sText_Revised);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 12, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
+    }
+    else
+    {
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
+    }
 
 
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);

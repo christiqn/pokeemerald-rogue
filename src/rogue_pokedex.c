@@ -2260,7 +2260,7 @@ static void DisplayMonTypeDefenses()
         // AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1 + ySpacing * y, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Resistances);
         // AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1 + ySpacing * y, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Immunities);
 
-        StringCopy(gStringVar4, gText_EmptyString2);
+        //StringCopy(gStringVar4, gText_EmptyString2);
 
         // for(i = 0; i < Rogue_GetRideSpeciesSpeedStars(sPokedexMenu->viewBaseSpecies); ++i)
         //     StringAppend(gStringVar4, sText_RideStar);

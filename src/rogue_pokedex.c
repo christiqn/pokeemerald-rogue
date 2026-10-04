@@ -327,6 +327,9 @@ static void MonForms_CreateSprites();
 // Ride stats
 static void MonRideStats_HandleInput(u8);
 
+// Matchups stats
+static void MonTypeMatchups_HandleInput(u8);
+
 struct PokedexMenu
 {
     u8 currentPage;
@@ -807,7 +810,7 @@ static void InitPageResources(u8 fromPage, u8 toPage)
 
             LoadMonIconPalettes();
 
-            MonInfo_CreateSprites(TRUE);
+            MonInfo_CreateSprites(FALSE);
         }
         break;
 
@@ -1018,7 +1021,7 @@ static void Task_PageWaitForKeyPress(u8 taskId)
         break;
 
     case PAGE_MON_TYPE_MATCHUPS:
-        MonRideStats_HandleInput(taskId);   // todocq
+        MonTypeMatchups_HandleInput(taskId);   // todocq
         break;
     
     default:
@@ -4176,6 +4179,11 @@ static void MonForms_CreateSprites()
 }
 
 static void MonRideStats_HandleInput(u8 taskId)
+{
+    MonInfo_HandleInput(taskId);
+}
+
+static void MonTypeMatchups_HandleInput(u8 taskId)
 {
     MonInfo_HandleInput(taskId);
 }

@@ -190,8 +190,15 @@ static const u8 sText_SkillFlying[] = _("Flying");
 static const u8 sText_SkillNone[] = _("None");
 
 static const u8 sText_Weaknesses[] = _("Weaknesses");
-static const u8 sText_Resistances[] = _("Resistances");
-static const u8 sText_Immunities[] = _("Immunities");
+static const u8 sText_Resists[] = _("Resists");
+static const u8 sText_Immune[] = _("Immune");
+
+static const u8 sText_X4[] = _("x4");
+static const u8 sText_X2[] = _("x2");
+static const u8 sText_XQuarter[] = _("x1/4");
+static const u8 sText_XHalf[] = _("x1/2");
+
+static const u8 sText_TypeMatchupEntry[] = _("{STR_VAR_1} {STR_VAR_2}");
 
 static const u8 sText_Base[] = _("{COLOR RED}{SHADOW LIGHT_RED}Base");
 static const u8 sText_Alolan[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}Alolan");
@@ -2249,6 +2256,8 @@ static void DisplayMonRideStatsText()
 static void DisplayMonTypeMatchupsText()
 {
 // changes
+static void DisplayMonTypeMatchupsText(void)
+{
     u8 i;
     u8 type1;
     u8 type2;
@@ -2283,7 +2292,7 @@ static void DisplayMonTypeMatchupsText()
         0,
         headerColor,
         TEXT_SKIP_DRAW,
-        _("Weaknesses")
+        sText_Weaknesses
     );
 
     displayCount = 1;
@@ -2309,9 +2318,9 @@ static void DisplayMonTypeMatchupsText()
             StringCopy(gStringVar1, gTypeNames[i]);
 
             if(multiplier == UQ_4_12(4.0))
-                StringCopy(gStringVar2, _("x4"));
+                StringCopy(gStringVar2, sText_X4);
             else
-                StringCopy(gStringVar2, _("x2"));
+                StringCopy(gStringVar2, sText_X2);
 
             StringExpandPlaceholders(
                 gStringVar4,
@@ -2344,7 +2353,7 @@ static void DisplayMonTypeMatchupsText()
         0,
         headerColor,
         TEXT_SKIP_DRAW,
-        _("Resists")
+        sText_Resists
     );
 
     displayCount = 1;
@@ -2370,13 +2379,13 @@ static void DisplayMonTypeMatchupsText()
             StringCopy(gStringVar1, gTypeNames[i]);
 
             if(multiplier == UQ_4_12(0.25))
-                StringCopy(gStringVar2, _("x1/4"));
+                StringCopy(gStringVar2, sText_XQuarter);
             else
-                StringCopy(gStringVar2, _("x1/2"));
+                StringCopy(gStringVar2, sText_XHalf);
 
             StringExpandPlaceholders(
                 gStringVar4,
-                _("{STR_VAR_1} {STR_VAR_2}")
+                sText_TypeMatchupEntry
             );
 
             AddTextPrinterParameterized4(
@@ -2405,7 +2414,7 @@ static void DisplayMonTypeMatchupsText()
         0,
         headerColor,
         TEXT_SKIP_DRAW,
-        _("Immune")
+        sText_Immune
     );
 
     displayCount = 10;
@@ -2445,6 +2454,7 @@ static void DisplayMonTypeMatchupsText()
 
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
+    }
 }
 
 static const struct BgTemplate sDiplomaBgTemplates[2] =

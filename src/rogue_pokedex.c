@@ -73,10 +73,10 @@ enum
     PAGE_MON_FORMS,
 
     PAGE_MON_RIDE_STATS,
-    PAGE_MON_TYPE_DEFENSES,
+    PAGE_MON_TYPE_MATCHUPS,
 
     PAGE_MON_FIRST = PAGE_MON_STATS,
-    PAGE_MON_LAST = PAGE_MON_TYPE_DEFENSES, //good
+    PAGE_MON_LAST = PAGE_MON_TYPE_MATCHUPS, //good
 };
 
 enum
@@ -169,7 +169,7 @@ static const u8 sTitle_Moves[] = _("Moves");
 static const u8 sTitle_Evolutions[] = _("Evolutions");
 static const u8 sTitle_Forms[] = _("Forms");
 static const u8 sTitle_Riding[] = _("Poké Ride");
-static const u8 sTitle_TypeDefenses[] = _("Type Defenses");
+static const u8 sTitle_TypeMatchups[] = _("Type Matchups");
 
 static const u8 sText_Types[] = _("Types");
 static const u8 sText_Abilities[] = _("Abilities");
@@ -210,7 +210,7 @@ static const u8 sTitle_Moves[] = _("MOVES");
 static const u8 sTitle_Evolutions[] = _("EVOLUTIONS");
 static const u8 sTitle_Forms[] = _("FORMS");
 static const u8 sTitle_Riding[] = _("POKé RIDE");
-static const u8 sTitle_TypeDefenses[] = _("TYPE DEFENSES");
+static const u8 sTitle_TypeMatchups[] = _("TYPE MATCHUPS");
 
 static const u8 sText_Types[] = _("TYPES");
 static const u8 sText_Abilities[] = _("ABILITIES");
@@ -263,7 +263,7 @@ static void DisplayMonMovesText(void);
 static void DisplayMonEvosText(void);
 static void DisplayMonFormsText(void);
 static void DisplayMonRideStatsText(void);
-static void DisplayMonTypeDefenses(void);
+static void DisplayMonTypeMatchupsText(void);
 static void InitOverviewBg(void);
 static void InitMonEntryWindows(void);
 static void DestroyMonEntryWindows(void);
@@ -792,7 +792,7 @@ static void InitPageResources(u8 fromPage, u8 toPage)
         break;
 
         // good
-    case PAGE_MON_TYPE_DEFENSES:
+    case PAGE_MON_TYPE_MATCHUPS:
         {
             LZDecompressWram(sPageListsTilemap, sTilemapBufferPtr);
             CopyBgTilemapBufferToVram(1);
@@ -834,7 +834,7 @@ static void DestroyPageResources(u8 fromPage, u8 toPage)
     case PAGE_MON_EVOS:
     case PAGE_MON_FORMS:
     case PAGE_MON_RIDE_STATS:
-    case PAGE_MON_TYPE_DEFENSES: // good
+    case PAGE_MON_TYPE_MATCHUPS: // good
         {
             MonInfo_DestroySprites();
             FreeMonIconPalettes();
@@ -949,9 +949,9 @@ static void Task_PageFadeIn(u8 taskId)
         DisplayMonRideStatsText();
         break;
 
-    case PAGE_MON_TYPE_DEFENSES:
+    case PAGE_MON_TYPE_MATCHUPS:
         DisplayMonEntryText();
-        DisplayMonTypeDefenses();  // todocq
+        DisplayMonTypeMatchupsText();  // todocq
         break;
 
     default:
@@ -1012,7 +1012,7 @@ static void Task_PageWaitForKeyPress(u8 taskId)
         MonRideStats_HandleInput(taskId);
         break;
 
-    case PAGE_MON_TYPE_DEFENSES:
+    case PAGE_MON_TYPE_MATCHUPS:
         MonRideStats_HandleInput(taskId);   // todocq
         break;
     
@@ -2239,23 +2239,9 @@ static void DisplayMonRideStatsText()
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
-static void DisplayMonTypeDefenses()
+static void DisplayMonTypeMatchupsText()
 {
-    u8 i;
-    const u8 ySpacing = 16;
-    u8 const headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
-    u8 const statColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
 
-    AddTitleText(sTitle_TypeDefenses);
-
-    FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
-
-
-
-
-
-    PutWindowTilemap(WIN_MON_PAGE_CONTENT);
-    CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
 static const struct BgTemplate sDiplomaBgTemplates[2] =

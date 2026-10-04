@@ -2244,7 +2244,203 @@ static void DisplayMonRideStatsText()
 
 static void DisplayMonTypeMatchupsText()
 {
+// changes
+    u8 i;
+    u8 type1;
+    u8 type2;
+    u8 displayCount = 0;
+    u8 const ySpacing = 16;
+    u8 const headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
+    u8 const color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
 
+    AddTitleText(_("Type Matchups"));
+
+    FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
+
+    type1 = GetTypeBySpecies(
+        sPokedexMenu->viewBaseSpecies,
+        0,
+        sPokedexMenu->viewOtId
+    );
+
+    type2 = GetTypeBySpecies(
+        sPokedexMenu->viewBaseSpecies,
+        1,
+        sPokedexMenu->viewOtId
+    );
+
+    // Weaknesses
+    AddTextPrinterParameterized4(
+        WIN_MON_PAGE_CONTENT,
+        FONT_NORMAL,
+        4,
+        1,
+        0,
+        0,
+        headerColor,
+        TEXT_SKIP_DRAW,
+        _("Weaknesses")
+    );
+
+    displayCount = 1;
+
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        uq4_12_t multiplier;
+
+        // Skip Mystery type.
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeModifier(i, type1);
+
+        if(type2 != type1)
+            multiplier = uq4_12_multiply(
+                multiplier,
+                GetTypeModifier(i, type2)
+            );
+
+        if(multiplier > UQ_4_12(1.0))
+        {
+            StringCopy(gStringVar1, gTypeNames[i]);
+
+            if(multiplier == UQ_4_12(4.0))
+                StringCopy(gStringVar2, _("x4"));
+            else
+                StringCopy(gStringVar2, _("x2"));
+
+            StringExpandPlaceholders(
+                gStringVar4,
+                _("{STR_VAR_1} {STR_VAR_2}")
+            );
+
+            AddTextPrinterParameterized4(
+                WIN_MON_PAGE_CONTENT,
+                FONT_NARROW,
+                4,
+                displayCount * ySpacing,
+                0,
+                0,
+                color,
+                TEXT_SKIP_DRAW,
+                gStringVar4
+            );
+
+            ++displayCount;
+        }
+    }
+
+    // Resistances
+    AddTextPrinterParameterized4(
+        WIN_MON_PAGE_CONTENT,
+        FONT_NORMAL,
+        76,
+        1,
+        0,
+        0,
+        headerColor,
+        TEXT_SKIP_DRAW,
+        _("Resists")
+    );
+
+    displayCount = 1;
+
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        uq4_12_t multiplier;
+
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeModifier(i, type1);
+
+        if(type2 != type1)
+            multiplier = uq4_12_multiply(
+                multiplier,
+                GetTypeModifier(i, type2)
+            );
+
+        if(multiplier > UQ_4_12(0.0)
+            && multiplier < UQ_4_12(1.0))
+        {
+            StringCopy(gStringVar1, gTypeNames[i]);
+
+            if(multiplier == UQ_4_12(0.25))
+                StringCopy(gStringVar2, _("x1/4"));
+            else
+                StringCopy(gStringVar2, _("x1/2"));
+
+            StringExpandPlaceholders(
+                gStringVar4,
+                _("{STR_VAR_1} {STR_VAR_2}")
+            );
+
+            AddTextPrinterParameterized4(
+                WIN_MON_PAGE_CONTENT,
+                FONT_NARROW,
+                76,
+                displayCount * ySpacing,
+                0,
+                0,
+                color,
+                TEXT_SKIP_DRAW,
+                gStringVar4
+            );
+
+            ++displayCount;
+        }
+    }
+
+    // Immunities
+    AddTextPrinterParameterized4(
+        WIN_MON_PAGE_CONTENT,
+        FONT_NORMAL,
+        4,
+        9 * ySpacing,
+        0,
+        0,
+        headerColor,
+        TEXT_SKIP_DRAW,
+        _("Immune")
+    );
+
+    displayCount = 10;
+
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        uq4_12_t multiplier;
+
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeModifier(i, type1);
+
+        if(type2 != type1)
+            multiplier = uq4_12_multiply(
+                multiplier,
+                GetTypeModifier(i, type2)
+            );
+
+        if(multiplier == UQ_4_12(0.0))
+        {
+            AddTextPrinterParameterized4(
+                WIN_MON_PAGE_CONTENT,
+                FONT_NARROW,
+                4,
+                displayCount * ySpacing,
+                0,
+                0,
+                color,
+                TEXT_SKIP_DRAW,
+                gTypeNames[i]
+            );
+
+            ++displayCount;
+        }
+    }
+
+    PutWindowTilemap(WIN_MON_PAGE_CONTENT);
+    CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
 static const struct BgTemplate sDiplomaBgTemplates[2] =

@@ -2318,7 +2318,7 @@ static void DisplayMonTypeMatchupsText()
 
             StringExpandPlaceholders(
                 gStringVar4,
-                ("{STR_VAR_1} {STR_VAR_2}")
+                _("{STR_VAR_1} {STR_VAR_2}")
             );
 
             AddTextPrinterParameterized4(
@@ -2379,7 +2379,7 @@ static void DisplayMonTypeMatchupsText()
 
             StringExpandPlaceholders(
                 gStringVar4,
-                ("{STR_VAR_1} {STR_VAR_2}")
+                _("{STR_VAR_1} {STR_VAR_2}")
             );
 
             AddTextPrinterParameterized4(

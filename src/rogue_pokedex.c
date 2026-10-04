@@ -169,7 +169,7 @@ static const u8 sTitle_Moves[] = _("Moves");
 static const u8 sTitle_Evolutions[] = _("Evolutions");
 static const u8 sTitle_Forms[] = _("Forms");
 static const u8 sTitle_Riding[] = _("Poké Ride");
-static const u8 sTitle_TypeDefenses[] = _("Type Defenses");
+static const u8 sTitle_TypeMatchups[] = _("Type Matchups");
 
 static const u8 sText_Types[] = _("Types");
 static const u8 sText_Abilities[] = _("Abilities");
@@ -2253,7 +2253,7 @@ static void DisplayMonTypeMatchupsText()
     u8 const headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
     u8 const color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
 
-    AddTitleText(_("Type Matchups"));
+    AddTitleText(sTitle_TypeMatchups);
 
     FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
 

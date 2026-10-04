@@ -806,7 +806,7 @@ static void InitPageResources(u8 fromPage, u8 toPage)
 
             LoadMonIconPalettes();
 
-            MonInfo_CreateSprites(FALSE);
+            MonInfo_CreateSprites(TRUE);
         }
         break;
 
@@ -2254,51 +2254,21 @@ static void DisplayMonTypeDefenses()
 
     FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
 
-    // Print Weaknesses text (Sprites display types setup later)
+
+    // Print weaknesses (Sprites display types setup later)
     if(Rogue_HasSpeciesBeenRevised(sPokedexMenu->viewBaseSpecies, REVISION_FLAG_TYPING))
     {
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 1, 0, 0, statColor, TEXT_SKIP_DRAW, sText_Revised);
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 12, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
+        
+
     }
     else
     {
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
+
+
     }
-
-    //Variable initialization
-	// u8 opposingPosition, atkType1, atkType2, defType1, defType2, effectiveness;
-    // s32 i, damageDealt = 0, maxDamageDealt = 0, damageTaken = 0, maxDamageTaken = 0;
-    // u32 aiMove, playerMove, aiBestMove = MOVE_NONE, aiAbility = GetBattlerAbility(battler), opposingBattler, weather = AI_GetWeather(AI_DATA);
-    // bool8 getsOneShot = FALSE, hasStatusMove = FALSE, hasSuperEffectiveMove = FALSE;
-	// u16 typeEffectiveness = UQ_4_12(1.0), aiMoveEffect; //baseline typing damage
-    
-
-    // typeEffectiveness = uq4_12_multiply(typeEffectiveness, (GetTypeModifier(atkType1, defType1)));
-    // if (atkType2 != atkType1)
-    //     typeEffectiveness = uq4_12_multiply(typeEffectiveness, (GetTypeModifier(atkType2, defType1)));
-    // if (defType2 != defType1)
-    // {
-    //     typeEffectiveness = uq4_12_multiply(typeEffectiveness, (GetTypeModifier(atkType1, defType2)));
-    //     if (atkType2 != atkType1)
-    //         typeEffectiveness = uq4_12_multiply(typeEffectiveness, (GetTypeModifier(atkType2, defType2)));
-    // }
-
-
-    // if(includeType)
-    // {
-        u8 xCoord = 133;
-        u8 yCoord = 0;
-
-        // if(Rogue_HasSpeciesBeenRevised(sPokedexMenu->viewBaseSpecies, REVISION_FLAG_TYPING))
-        // {
-        //     xCoord += 8;   
-        // }
-
-        sPokedexMenu->pageSprites[MON_SPRITE_TYPE1] = CreateMonTypeIcon(GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 0, sPokedexMenu->viewOtId), xCoord, yCoord);
-
-        if(GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 0, sPokedexMenu->viewOtId) != GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 1, sPokedexMenu->viewOtId))
-            sPokedexMenu->pageSprites[MON_SPRITE_TYPE2] = CreateMonTypeIcon(GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 1, sPokedexMenu->viewOtId), xCoord + 33, yCoord);
-    // }
 
 
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);

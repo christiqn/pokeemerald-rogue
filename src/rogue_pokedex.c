@@ -90,6 +90,26 @@ enum
     MON_SPRITE_EVO_ICON2,
     MON_SPRITE_EVO_ICON3,
     MON_SPRITE_EVO_ICON4,
+
+    MON_SPRITE_MATCHUP1,
+    MON_SPRITE_MATCHUP2,
+    MON_SPRITE_MATCHUP3,
+    MON_SPRITE_MATCHUP4,
+    MON_SPRITE_MATCHUP5,
+    MON_SPRITE_MATCHUP6,
+    MON_SPRITE_MATCHUP7,
+    MON_SPRITE_MATCHUP8,
+    MON_SPRITE_MATCHUP9,
+    MON_SPRITE_MATCHUP10,
+    MON_SPRITE_MATCHUP11,
+    MON_SPRITE_MATCHUP12,
+    MON_SPRITE_MATCHUP13,
+    MON_SPRITE_MATCHUP14,
+    MON_SPRITE_MATCHUP15,
+    MON_SPRITE_MATCHUP16,
+    MON_SPRITE_MATCHUP17,
+    MON_SPRITE_MATCHUP18,
+    MON_SPRITE_MATCHUP19,
     MON_SPRITE_COUNT,
 };
 
@@ -3754,6 +3774,25 @@ static void MonInfo_DestroySprites()
 
             case MON_SPRITE_TYPE1:
             case MON_SPRITE_TYPE2:
+            case MON_SPRITE_MATCHUP1:
+            case MON_SPRITE_MATCHUP2:
+            case MON_SPRITE_MATCHUP3:
+            case MON_SPRITE_MATCHUP4:
+            case MON_SPRITE_MATCHUP5:
+            case MON_SPRITE_MATCHUP6:
+            case MON_SPRITE_MATCHUP7:
+            case MON_SPRITE_MATCHUP8:
+            case MON_SPRITE_MATCHUP9:
+            case MON_SPRITE_MATCHUP10:
+            case MON_SPRITE_MATCHUP11:
+            case MON_SPRITE_MATCHUP12:
+            case MON_SPRITE_MATCHUP13:
+            case MON_SPRITE_MATCHUP14:
+            case MON_SPRITE_MATCHUP15:
+            case MON_SPRITE_MATCHUP16:
+            case MON_SPRITE_MATCHUP17:
+            case MON_SPRITE_MATCHUP18:
+            case MON_SPRITE_MATCHUP19:
                 DestroyMonTypIcon(spriteId);
                 break;
                 

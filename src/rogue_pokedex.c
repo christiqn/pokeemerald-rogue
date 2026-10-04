@@ -295,6 +295,9 @@ static void DisplayMonEvosText(void);
 static void DisplayMonFormsText(void);
 static void DisplayMonRideStatsText(void);
 static void DisplayMonTypeMatchupsText(void);
+
+u8 CreateMonTypeIcon(u16 typeId, u8 x, u8 y);
+
 static void InitOverviewBg(void);
 static void InitMonEntryWindows(void);
 static void DestroyMonEntryWindows(void);
@@ -3754,7 +3757,6 @@ static u8 Overview_GetMaxScrollAmount()
 u32 GetPokedexMonPersonality(u16 species);
 
 void LoadMoveTypesSpritesheetAndPalette();
-u8 CreateMonTypeIcon(u16 typeId, u8 x, u8 y);
 void DestroyMonTypIcon(u8 spriteId);
 
 static void MonInfo_CreateSprites(bool8 includeType)

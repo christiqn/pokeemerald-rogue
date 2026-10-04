@@ -2278,10 +2278,13 @@ static void DisplayMonTypeMatchupsText()
     u8 i;
     u8 type1;
     u8 type2;
-    u8 displayCount = 0;
-    u8 const ySpacing = 16;
+    u8 weaknessCount = 0;
+    u8 resistCount = 0;
+    u8 immuneCount = 0;
+    u8 weaknessSprite = MON_SPRITE_MATCHUP1;
+    u8 resistSprite = MON_SPRITE_MATCHUP7;
+    u8 immuneSprite = MON_SPRITE_MATCHUP13;
     u8 const headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
-    u8 const color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
 
     AddTitleText(sTitle_TypeMatchups);
 
@@ -2299,7 +2302,12 @@ static void DisplayMonTypeMatchupsText()
         sPokedexMenu->viewOtId
     );
 
-    // Weaknesses
+    /*
+     * ---------------------------------------------------------
+     * Weaknesses
+     * ---------------------------------------------------------
+     */
+
     AddTextPrinterParameterized4(
         WIN_MON_PAGE_CONTENT,
         FONT_NORMAL,
@@ -2312,13 +2320,13 @@ static void DisplayMonTypeMatchupsText()
         sText_Weaknesses
     );
 
-    displayCount = 1;
-
+    /*
+     * First display x4 weaknesses.
+     */
     for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
     {
         uq4_12_t multiplier;
 
-        // Skip Mystery type.
         if(i == TYPE_MYSTERY)
             continue;
 
@@ -2330,37 +2338,62 @@ static void DisplayMonTypeMatchupsText()
                 GetTypeModifier(i, type2)
             );
 
-        if(multiplier > UQ_4_12(1.0))
-        {
-            StringCopy(gStringVar1, gTypeNames[i]);
+        if(multiplier != UQ_4_12(4.0))
+            continue;
 
-            if(multiplier == UQ_4_12(4.0))
-                StringCopy(gStringVar2, sText_X4);
-            else
-                StringCopy(gStringVar2, sText_X2);
+        if(weaknessCount >= 6)
+            break;
 
-            StringExpandPlaceholders(
-                gStringVar4,
-                sText_TypeMatchupEntry
+        sPokedexMenu->pageSprites[weaknessSprite + weaknessCount] =
+            CreateMonTypeIcon(
+                i,
+                12 + ((weaknessCount % 3) * 40),
+                18 + ((weaknessCount / 3) * 16)
             );
 
-            AddTextPrinterParameterized4(
-                WIN_MON_PAGE_CONTENT,
-                FONT_NARROW,
-                4,
-                displayCount * ySpacing,
-                0,
-                0,
-                color,
-                TEXT_SKIP_DRAW,
-                gStringVar4
-            );
-
-            ++displayCount;
-        }
+        ++weaknessCount;
     }
 
-    // Resistances
+    /*
+     * Then display x2 weaknesses.
+     */
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        uq4_12_t multiplier;
+
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeModifier(i, type1);
+
+        if(type2 != type1)
+            multiplier = uq4_12_multiply(
+                multiplier,
+                GetTypeModifier(i, type2)
+            );
+
+        if(multiplier != UQ_4_12(2.0))
+            continue;
+
+        if(weaknessCount >= 6)
+            break;
+
+        sPokedexMenu->pageSprites[weaknessSprite + weaknessCount] =
+            CreateMonTypeIcon(
+                i,
+                12 + ((weaknessCount % 3) * 40),
+                18 + ((weaknessCount / 3) * 16)
+            );
+
+        ++weaknessCount;
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * Resistances
+     * ---------------------------------------------------------
+     */
+
     AddTextPrinterParameterized4(
         WIN_MON_PAGE_CONTENT,
         FONT_NORMAL,
@@ -2373,8 +2406,9 @@ static void DisplayMonTypeMatchupsText()
         sText_Resists
     );
 
-    displayCount = 1;
-
+    /*
+     * First display x1/2 resistances.
+     */
     for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
     {
         uq4_12_t multiplier;
@@ -2390,43 +2424,67 @@ static void DisplayMonTypeMatchupsText()
                 GetTypeModifier(i, type2)
             );
 
-        if(multiplier > UQ_4_12(0.0)
-            && multiplier < UQ_4_12(1.0))
-        {
-            StringCopy(gStringVar1, gTypeNames[i]);
+        if(multiplier != UQ_4_12(0.5))
+            continue;
 
-            if(multiplier == UQ_4_12(0.25))
-                StringCopy(gStringVar2, sText_XQuarter);
-            else
-                StringCopy(gStringVar2, sText_XHalf);
+        if(resistCount >= 6)
+            break;
 
-            StringExpandPlaceholders(
-                gStringVar4,
-                sText_TypeMatchupEntry
+        sPokedexMenu->pageSprites[resistSprite + resistCount] =
+            CreateMonTypeIcon(
+                i,
+                84 + ((resistCount % 3) * 16),
+                18 + ((resistCount / 3) * 16)
             );
 
-            AddTextPrinterParameterized4(
-                WIN_MON_PAGE_CONTENT,
-                FONT_NARROW,
-                76,
-                displayCount * ySpacing,
-                0,
-                0,
-                color,
-                TEXT_SKIP_DRAW,
-                gStringVar4
-            );
-
-            ++displayCount;
-        }
+        ++resistCount;
     }
 
-    // Immunities
+    /*
+     * Then display x1/4 resistances.
+     */
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        uq4_12_t multiplier;
+
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeModifier(i, type1);
+
+        if(type2 != type1)
+            multiplier = uq4_12_multiply(
+                multiplier,
+                GetTypeModifier(i, type2)
+            );
+
+        if(multiplier != UQ_4_12(0.25))
+            continue;
+
+        if(resistCount >= 6)
+            break;
+
+        sPokedexMenu->pageSprites[resistSprite + resistCount] =
+            CreateMonTypeIcon(
+                i,
+                84 + ((resistCount % 3) * 16),
+                18 + ((resistCount / 3) * 16)
+            );
+
+        ++resistCount;
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * Immunities
+     * ---------------------------------------------------------
+     */
+
     AddTextPrinterParameterized4(
         WIN_MON_PAGE_CONTENT,
         FONT_NORMAL,
         4,
-        9 * ySpacing,
+        64,
         0,
         0,
         headerColor,
@@ -2434,8 +2492,6 @@ static void DisplayMonTypeMatchupsText()
         sText_Immune
     );
 
-    displayCount = 10;
-
     for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
     {
         uq4_12_t multiplier;
@@ -2451,22 +2507,20 @@ static void DisplayMonTypeMatchupsText()
                 GetTypeModifier(i, type2)
             );
 
-        if(multiplier == UQ_4_12(0.0))
-        {
-            AddTextPrinterParameterized4(
-                WIN_MON_PAGE_CONTENT,
-                FONT_NARROW,
-                4,
-                displayCount * ySpacing,
-                0,
-                0,
-                color,
-                TEXT_SKIP_DRAW,
-                gTypeNames[i]
+        if(multiplier != UQ_4_12(0.0))
+            continue;
+
+        if(immuneCount >= 6)
+            break;
+
+        sPokedexMenu->pageSprites[immuneSprite + immuneCount] =
+            CreateMonTypeIcon(
+                i,
+                12 + ((immuneCount % 3) * 40),
+                80 + ((immuneCount / 3) * 16)
             );
 
-            ++displayCount;
-        }
+        ++immuneCount;
     }
 
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);

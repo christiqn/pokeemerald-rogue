@@ -27,6 +27,7 @@
 #include "party_menu.h"
 #include "pokedex.h"
 #include "pokemon_icon.h"
+#include "pokemon.h"
 
 #include "constants/abilities.h"
 #include "constants/items.h"
@@ -73,10 +74,10 @@ enum
     PAGE_MON_FORMS,
 
     PAGE_MON_RIDE_STATS,
-    PAGE_MON_TYPE_DEFENSES,
+    PAGE_MON_TYPE_MATCHUPS,
 
     PAGE_MON_FIRST = PAGE_MON_STATS,
-    PAGE_MON_LAST = PAGE_MON_TYPE_DEFENSES, //good
+    PAGE_MON_LAST = PAGE_MON_TYPE_MATCHUPS, //good
 };
 
 enum
@@ -267,7 +268,7 @@ static void DisplayMonMovesText(void);
 static void DisplayMonEvosText(void);
 static void DisplayMonFormsText(void);
 static void DisplayMonRideStatsText(void);
-static void DisplayMonTypeDefenses(void);
+static void DisplayMonTypeMatchupsText(void);
 static void InitOverviewBg(void);
 static void InitMonEntryWindows(void);
 static void DestroyMonEntryWindows(void);
@@ -796,7 +797,7 @@ static void InitPageResources(u8 fromPage, u8 toPage)
         break;
 
         // good
-    case PAGE_MON_TYPE_DEFENSES:
+    case PAGE_MON_TYPE_MATCHUPS:
         {
             LZDecompressWram(sPageListsTilemap, sTilemapBufferPtr);
             CopyBgTilemapBufferToVram(1);
@@ -838,7 +839,7 @@ static void DestroyPageResources(u8 fromPage, u8 toPage)
     case PAGE_MON_EVOS:
     case PAGE_MON_FORMS:
     case PAGE_MON_RIDE_STATS:
-    case PAGE_MON_TYPE_DEFENSES: // good
+    case PAGE_MON_TYPE_MATCHUPS: // good
         {
             MonInfo_DestroySprites();
             FreeMonIconPalettes();
@@ -953,9 +954,9 @@ static void Task_PageFadeIn(u8 taskId)
         DisplayMonRideStatsText();
         break;
 
-    case PAGE_MON_TYPE_DEFENSES:
+    case PAGE_MON_TYPE_MATCHUPS:
         DisplayMonEntryText();
-        DisplayMonTypeDefenses();  // todocq
+        DisplayMonTypeMatchupsText();  // todocq
         break;
 
     default:
@@ -1016,7 +1017,7 @@ static void Task_PageWaitForKeyPress(u8 taskId)
         MonRideStats_HandleInput(taskId);
         break;
 
-    case PAGE_MON_TYPE_DEFENSES:
+    case PAGE_MON_TYPE_MATCHUPS:
         MonRideStats_HandleInput(taskId);   // todocq
         break;
     
@@ -2243,7 +2244,7 @@ static void DisplayMonRideStatsText()
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
-static void DisplayMonTypeDefenses()
+static void DisplayMonTypeMatchupsText()
 {
     u8 i = 0;
     const u8 ySpacing = 16;
@@ -2259,17 +2260,19 @@ static void DisplayMonTypeDefenses()
     if(Rogue_HasSpeciesBeenRevised(sPokedexMenu->viewBaseSpecies, REVISION_FLAG_TYPING))
     {
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 1, 0, 0, statColor, TEXT_SKIP_DRAW, sText_Revised);
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 12, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
-        
-
+    
+        for (u8 attackType =  TYPE_NORMAL; attackType < NUMBER_OF_MON_TYPES; attackType++)
+        {
+            
+        }
     }
     else
     {
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
-
-
     }
 
+
+    
 
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);

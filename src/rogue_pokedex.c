@@ -2255,9 +2255,6 @@ static void DisplayMonRideStatsText()
 
 static void DisplayMonTypeMatchupsText()
 {
-// changes
-static void DisplayMonTypeMatchupsText(void)
-{
     u8 i;
     u8 type1;
     u8 type2;
@@ -2454,7 +2451,6 @@ static void DisplayMonTypeMatchupsText(void)
 
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
-    }
 }
 
 static const struct BgTemplate sDiplomaBgTemplates[2] =

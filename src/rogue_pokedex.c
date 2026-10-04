@@ -196,10 +196,6 @@ static const u8 sText_Immunities[] = _("Immunities");
 static const u8 sText_Four[] = _("x4");
 static const u8 sText_Two[] = _("x2");
 
-static const u8 sText_Weaknesses[] = _("Weaknesses");
-static const u8 sText_Resistances[] = _("Resistances");
-static const u8 sText_Immunities[] = _("Immunities");
-
 static const u8 sText_Base[] = _("{COLOR RED}{SHADOW LIGHT_RED}Base");
 static const u8 sText_Alolan[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}Alolan");
 static const u8 sText_Galarian[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}Galarian");

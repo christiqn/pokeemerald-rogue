@@ -297,6 +297,8 @@ static void DisplayMonRideStatsText(void);
 static void DisplayMonTypeMatchupsText(void);
 
 u8 CreateMonTypeIcon(u16 typeId, u8 x, u8 y);
+void DestroyMonTypIcon(u8 spriteId);
+
 static uq4_12_t GetMonTypeMatchupMultiplier(u8 attackType, u16 species);
 static u8 GetMonTypeMatchupRowCount(u16 species);
 static void DestroyMonTypeMatchupSprites(void);

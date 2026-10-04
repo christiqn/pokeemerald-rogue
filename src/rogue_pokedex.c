@@ -2283,7 +2283,7 @@ static void DisplayMonTypeMatchupsText()
         0,
         headerColor,
         TEXT_SKIP_DRAW,
-        _("Weaknesses")
+        sText_Weaknesses
     );
 
     displayCount = 1;
@@ -2344,7 +2344,7 @@ static void DisplayMonTypeMatchupsText()
         0,
         headerColor,
         TEXT_SKIP_DRAW,
-        _("Resists")
+        sText_Resistances
     );
 
     displayCount = 1;
@@ -2405,7 +2405,7 @@ static void DisplayMonTypeMatchupsText()
         0,
         headerColor,
         TEXT_SKIP_DRAW,
-        _("Immune")
+        sText_Immunities
     );
 
     displayCount = 10;

@@ -193,6 +193,13 @@ static const u8 sText_Weaknesses[] = _("Weaknesses");
 static const u8 sText_Resistances[] = _("Resistances");
 static const u8 sText_Immunities[] = _("Immunities");
 
+static const u8 sText_Four[] = _("x4");
+static const u8 sText_Two[] = _("x2");
+
+static const u8 sText_Weaknesses[] = _("Weaknesses");
+static const u8 sText_Resistances[] = _("Resistances");
+static const u8 sText_Immunities[] = _("Immunities");
+
 static const u8 sText_Base[] = _("{COLOR RED}{SHADOW LIGHT_RED}Base");
 static const u8 sText_Alolan[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}Alolan");
 static const u8 sText_Galarian[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}Galarian");
@@ -2309,13 +2316,13 @@ static void DisplayMonTypeMatchupsText()
             StringCopy(gStringVar1, gTypeNames[i]);
 
             if(multiplier == UQ_4_12(4.0))
-                StringCopy(gStringVar2, _("x4"));
+                StringCopy(gStringVar2, sText_Four);
             else
-                StringCopy(gStringVar2, _("x2"));
+                StringCopy(gStringVar2, sText_Two);
 
             StringExpandPlaceholders(
                 gStringVar4,
-                _("{STR_VAR_1} {STR_VAR_2}")
+                ("{STR_VAR_1} {STR_VAR_2}")
             );
 
             AddTextPrinterParameterized4(
@@ -2370,13 +2377,13 @@ static void DisplayMonTypeMatchupsText()
             StringCopy(gStringVar1, gTypeNames[i]);
 
             if(multiplier == UQ_4_12(0.25))
-                StringCopy(gStringVar2, _("x1/4"));
+                StringCopy(gStringVar2, sText_Four);
             else
-                StringCopy(gStringVar2, _("x1/2"));
+                StringCopy(gStringVar2, sText_Two);
 
             StringExpandPlaceholders(
                 gStringVar4,
-                _("{STR_VAR_1} {STR_VAR_2}")
+                ("{STR_VAR_1} {STR_VAR_2}")
             );
 
             AddTextPrinterParameterized4(

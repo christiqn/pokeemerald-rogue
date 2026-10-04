@@ -27,7 +27,6 @@
 #include "party_menu.h"
 #include "pokedex.h"
 #include "pokemon_icon.h"
-#include "pokemon.h"
 
 #include "constants/abilities.h"
 #include "constants/items.h"
@@ -2249,36 +2248,7 @@ static void DisplayMonRideStatsText()
 
 static void DisplayMonTypeMatchupsText()
 {
-    u8 i = 0;
-    const u8 ySpacing = 16;
-    u8 const headerColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
-    u8 const statColor[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
 
-    AddTitleText(sTitle_TypeDefenses);
-
-    FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
-
-
-    // Print weaknesses (Sprites display types setup later)
-    if(Rogue_HasSpeciesBeenRevised(sPokedexMenu->viewBaseSpecies, REVISION_FLAG_TYPING))
-    {
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 1, 0, 0, statColor, TEXT_SKIP_DRAW, sText_Revised);
-    
-        for (u8 attackType =  TYPE_NORMAL; attackType < NUMBER_OF_MON_TYPES; attackType++)
-        {
-            
-        }
-    }
-    else
-    {
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NORMAL, 4, 1, 0, 0, headerColor, TEXT_SKIP_DRAW, sText_Weaknesses);
-    }
-
-
-    
-
-    PutWindowTilemap(WIN_MON_PAGE_CONTENT);
-    CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
 static const struct BgTemplate sDiplomaBgTemplates[2] =

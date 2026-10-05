@@ -90,24 +90,6 @@ enum
     MON_SPRITE_EVO_ICON2,
     MON_SPRITE_EVO_ICON3,
     MON_SPRITE_EVO_ICON4,
-    MON_SPRITE_MATCHUP1,
-    MON_SPRITE_MATCHUP2,
-    MON_SPRITE_MATCHUP3,
-    MON_SPRITE_MATCHUP4,
-    MON_SPRITE_MATCHUP5,
-    MON_SPRITE_MATCHUP6,
-    MON_SPRITE_MATCHUP7,
-    MON_SPRITE_MATCHUP8,
-    MON_SPRITE_MATCHUP9,
-    MON_SPRITE_MATCHUP10,
-    MON_SPRITE_MATCHUP11,
-    MON_SPRITE_MATCHUP12,
-    MON_SPRITE_MATCHUP13,
-    MON_SPRITE_MATCHUP14,
-    MON_SPRITE_MATCHUP15,
-    MON_SPRITE_MATCHUP16,
-    MON_SPRITE_MATCHUP17,
-    MON_SPRITE_MATCHUP18,
     MON_SPRITE_COUNT,
 };
 
@@ -261,12 +243,6 @@ static const u8 sText_NoDataFound[] = _("{COLOR RED}{SHADOW LIGHT_RED}No data fo
 static const u8 sText_Add[] = _("+");
 static const u8 sText_Minus[] = _("-");
 
-static const u8 sText_X4[] = _("x4");
-static const u8 sText_X2[] = _("x2");
-static const u8 sText_XHalf[] = _("x1/2");
-static const u8 sText_XQuarter[] = _("x1/4");
-static const u8 sText_X0[] = _("0x");
-
 extern const u8 gText_DexNational[];
 extern const u8 gText_DexHoenn[];
 extern const u8 gText_PokedexDiploma[];
@@ -321,10 +297,6 @@ static u8 Overview_GetMaxScrollAmount();
 // MonInfo
 static void MonInfo_CreateSprites(bool8 includeType);
 static void MonInfo_DestroySprites();
-void LoadMoveTypesSpritesheetAndPalette(void);
-u8 CreateMonTypeIcon(u16 typeId, u8 x, u8 y);
-void DestroyMonTypIcon(u8 spriteId);
-static void DestroyMonTypeMatchupSprites(void);
 
 // Mon stats
 static void MonStats_HandleInput(u8);
@@ -349,9 +321,6 @@ static void MonForms_CreateSprites();
 
 // Ride stats
 static void MonRideStats_HandleInput(u8);
-
-// Type matchups
-static void MonTypeMatchups_HandleInput(u8);
 
 struct PokedexMenu
 {
@@ -546,18 +515,6 @@ void Rogue_ShowPokedexFromBattle(void)
     sPokedexViewReq.perView.specificMon.partySlot = gMultiUsePlayerCursor;
 }
 
-void Rogue_ShowPokedexForPartySlot(u8 slot)
-{
-    SetupPokedexViewDefault();
-    gMain.savedCallback = CB2_ReturnToFieldContinueScript;
-
-    // ReturnToPartyMenuSubMenu called below
-    sPokedexViewReq.view = DEX_VIEW_SPECIFIC_MON;
-    sPokedexViewReq.perView.specificMon.species = GetSpeciesAtSlot(slot);
-    sPokedexViewReq.perView.specificMon.OtId = GetOtIdAtSlot(slot);
-    sPokedexViewReq.perView.specificMon.partySlot = slot;
-}
-
 void Rogue_ShowPokedexFromBattlePartySlot(u8 slot)
 {
     SetupPokedexViewDefault();
@@ -569,6 +526,18 @@ void Rogue_ShowPokedexFromBattlePartySlot(u8 slot)
     sPokedexViewReq.view = DEX_VIEW_SPECIFIC_MON;
     sPokedexViewReq.inBattleScreen = TRUE;
     sPokedexViewReq.battlePartySlotView = TRUE;
+    sPokedexViewReq.perView.specificMon.species = GetSpeciesAtSlot(slot);
+    sPokedexViewReq.perView.specificMon.OtId = GetOtIdAtSlot(slot);
+    sPokedexViewReq.perView.specificMon.partySlot = slot;
+}
+
+void Rogue_ShowPokedexForPartySlot(u8 slot)
+{
+    SetupPokedexViewDefault();
+    gMain.savedCallback = CB2_ReturnToFieldContinueScript;
+
+    // ReturnToPartyMenuSubMenu called below
+    sPokedexViewReq.view = DEX_VIEW_SPECIFIC_MON;
     sPokedexViewReq.perView.specificMon.species = GetSpeciesAtSlot(slot);
     sPokedexViewReq.perView.specificMon.OtId = GetOtIdAtSlot(slot);
     sPokedexViewReq.perView.specificMon.partySlot = slot;
@@ -1069,7 +1038,7 @@ static void Task_PageWaitForKeyPress(u8 taskId)
         break;
 
     case PAGE_MON_TYPE_MATCHUPS:
-        MonTypeMatchups_HandleInput(taskId);
+        MonRideStats_HandleInput(taskId);   // todocq
         break;
     
     default:
@@ -2295,291 +2264,9 @@ static void DisplayMonRideStatsText()
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
-static u16 GetPokedexCurrentAbility(void)
-{
-    // When the Pokédex is opened for a specific party Pokémon, use the
-    // actual ability from that party slot. Do not compare species IDs here:
-    // Rogue can display a base/form species ID that does not exactly match
-    // the raw species ID stored on the party Pokémon.
-    if(sPokedexViewReq.view == DEX_VIEW_SPECIFIC_MON
-        && sPokedexMenu->partySlot < PARTY_SIZE)
-    {
-        return GetMonData(&gPlayerParty[sPokedexMenu->partySlot], MON_DATA_ABILITY);
-    }
-
-    // The normal species Pokédex has no single active ability, so do not
-    // apply one of the species' possible abilities to the type chart.
-    return ABILITY_NONE;
-}
-
-static uq4_12_t ApplyPokedexAbilityTypeModifier(u8 attackType, uq4_12_t multiplier)
-{
-    u16 ability = GetPokedexCurrentAbility();
-
-    switch(ability)
-    {
-    // Complete type immunities / absorptions.
-    case ABILITY_LEVITATE:
-        if(attackType == TYPE_GROUND)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_VOLT_ABSORB:
-    case ABILITY_LIGHTNING_ROD:
-    case ABILITY_MOTOR_DRIVE:
-        if(attackType == TYPE_ELECTRIC)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_WATER_ABSORB:
-    case ABILITY_STORM_DRAIN:
-        if(attackType == TYPE_WATER)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_FLASH_FIRE:
-        if(attackType == TYPE_FIRE)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_DRY_SKIN:
-        if(attackType == TYPE_WATER)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_SAP_SIPPER:
-        if(attackType == TYPE_GRASS)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_EARTH_EATER:
-        if(attackType == TYPE_GROUND)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_WELL_BAKED_BODY:
-        if(attackType == TYPE_FIRE)
-            return UQ_4_12(0.0);
-        break;
-
-    // Defensive type-based damage reductions.
-    case ABILITY_THICK_FAT:
-        if(attackType == TYPE_FIRE || attackType == TYPE_ICE)
-            multiplier = uq4_12_multiply(multiplier, UQ_4_12(0.5));
-        break;
-    case ABILITY_HEATPROOF:
-        if(attackType == TYPE_FIRE)
-            multiplier = uq4_12_multiply(multiplier, UQ_4_12(0.5));
-        break;
-    case ABILITY_WATER_BUBBLE:
-        if(attackType == TYPE_FIRE)
-            multiplier = uq4_12_multiply(multiplier, UQ_4_12(0.5));
-        break;
-    case ABILITY_PURIFYING_SALT:
-        if(attackType == TYPE_GHOST)
-            multiplier = uq4_12_multiply(multiplier, UQ_4_12(0.5));
-        break;
-    // Filter, Solid Rock and Prism Armor reduce super-effective damage by
-    // 25%, which can produce 1.5x/3x values. Those values do not fit the
-    // five categories displayed by this page, so they are intentionally
-    // not folded into this type-only chart.
-    case ABILITY_WONDER_GUARD:
-        if(multiplier <= UQ_4_12(1.0))
-            return UQ_4_12(0.0);
-        break;
-    default:
-        break;
-    }
-
-    return multiplier;
-}
-
-static uq4_12_t GetTypeMatchupMultiplier(u8 attackType, u8 type1, u8 type2)
-{
-    uq4_12_t multiplier = GetTypeModifier(attackType, type1);
-
-    if(type2 != type1)
-        multiplier = uq4_12_multiply(multiplier, GetTypeModifier(attackType, type2));
-
-    return ApplyPokedexAbilityTypeModifier(attackType, multiplier);
-}
-
-static u8 GetTypeMatchupCount(u8 category)
-{
-    u8 i;
-    u8 type1 = GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 0, sPokedexMenu->viewOtId);
-    u8 type2 = GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 1, sPokedexMenu->viewOtId);
-    u8 count = 0;
-    uq4_12_t multiplier;
-    uq4_12_t expectedMultiplier;
-
-    switch(category)
-    {
-    case 0: expectedMultiplier = UQ_4_12(4.0); break;
-    case 1: expectedMultiplier = UQ_4_12(2.0); break;
-    case 2: expectedMultiplier = UQ_4_12(0.5); break;
-    case 3: expectedMultiplier = UQ_4_12(0.25); break;
-    default: expectedMultiplier = UQ_4_12(0.0); break;
-    }
-
-    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
-    {
-        if(i == TYPE_MYSTERY)
-            continue;
-
-        multiplier = GetTypeMatchupMultiplier(i, type1, type2);
-        if(multiplier == expectedMultiplier)
-            ++count;
-    }
-
-    return count;
-}
-
-static u8 GetTypeMatchupLineCount()
-{
-    u8 category;
-    u8 count;
-    u8 lineCount = 0;
-
-    for(category = 0; category < 5; ++category)
-    {
-        count = GetTypeMatchupCount(category);
-
-        if(count != 0)
-        {
-            // The multiplier uses the first 3 icon slots on its line.
-            // Continuation lines can fit 4 icons each.
-            lineCount += 1 + ((count > 3) ? (count - 3 + 3) / 4 : 0);
-        }
-    }
-
-    return lineCount;
-}
-
-static u16 GetMaxTypeMatchupScrollOffset()
-{
-    u16 lineCount = GetTypeMatchupLineCount();
-    return lineCount - min(lineCount, MAX_LIST_DISPLAY_COUNT);
-}
-
-static void DestroyMonTypeMatchupSprites()
-{
-    u8 i;
-
-    for(i = 0; i < 18; ++i)
-    {
-        u8 spriteId = sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + i];
-
-        if(spriteId != SPRITE_NONE)
-        {
-            DestroyMonTypIcon(spriteId);
-            sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + i] = SPRITE_NONE;
-        }
-    }
-}
-
 static void DisplayMonTypeMatchupsText()
 {
-    u8 category;
-    u8 typeIndex;
-    u8 lineIndex = 0;
-    u8 displayLine;
-    u8 displaySprite = 0;
-    u8 iconIndex;
-    u8 typeCount;
-    u8 iconsOnLine;
-    u8 lineIconStart;
-    u8 matchIndex;
-    u8 const ySpacing = 16;
-    u8 const color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
-    u8 type1 = GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 0, sPokedexMenu->viewOtId);
-    u8 type2 = GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 1, sPokedexMenu->viewOtId);
-    uq4_12_t multiplier;
-    uq4_12_t expectedMultiplier;
-    const u8 *multiplierText;
 
-    AddTitleText(sTitle_TypeMatchups);
-
-    FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
-    DestroyMonTypeMatchupSprites();
-
-    for(category = 0; category < 5; ++category)
-    {
-        switch(category)
-        {
-        case 0:
-            expectedMultiplier = UQ_4_12(4.0);
-            multiplierText = sText_X4;
-            break;
-        case 1:
-            expectedMultiplier = UQ_4_12(2.0);
-            multiplierText = sText_X2;
-            break;
-        case 2:
-            expectedMultiplier = UQ_4_12(0.5);
-            multiplierText = sText_XHalf;
-            break;
-        case 3:
-            expectedMultiplier = UQ_4_12(0.25);
-            multiplierText = sText_XQuarter;
-            break;
-        default:
-            expectedMultiplier = UQ_4_12(0.0);
-            multiplierText = sText_X0;
-            break;
-        }
-
-        typeCount = GetTypeMatchupCount(category);
-        if(typeCount == 0)
-            continue;
-
-        lineIconStart = 0;
-        while(lineIconStart < typeCount)
-        {
-            // The first line has room for 3 icons beside the multiplier.
-            // Continuation lines have room for 4 icons.
-            iconsOnLine = min(typeCount - lineIconStart, 3);
-
-            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
-            {
-                displayLine = lineIndex - sPokedexMenu->listScrollAmount;
-
-                if(lineIconStart == 0)
-                    AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, multiplierText);
-
-                // Find the types belonging to this specific line. Start from the
-                // beginning of the type list, but skip the types on previous lines.
-                matchIndex = 0;
-                iconIndex = 0;
-
-                for(typeIndex = 0; typeIndex < NUMBER_OF_MON_TYPES && iconIndex < iconsOnLine; ++typeIndex)
-                {
-                    if(typeIndex == TYPE_MYSTERY)
-                        continue;
-
-                    multiplier = GetTypeMatchupMultiplier(typeIndex, type1, type2);
-                    if(multiplier != expectedMultiplier)
-                        continue;
-
-                    if(matchIndex >= lineIconStart)
-                    {
-                        if(displaySprite < 18)
-                        {
-                            // CreateMonTypeIcon adds +16 to X and +8 to Y.
-                            // Use 32-pixel spacing so the 32x-ish type icons do not overlap.
-                            // The +8 Y offset is accounted for by CreateMonTypeIcon; use 24 so the icon sits lower in the row.
-                            u8 iconX = (lineIconStart == 0 ? 111 : 109) + 34 * iconIndex;
-                            u8 iconY = 24 + ySpacing * displayLine;
-                            sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
-                            ++displaySprite;
-                        }
-                        ++iconIndex;
-                    }
-
-                    ++matchIndex;
-                }
-            }
-
-            lineIconStart += iconsOnLine;
-            ++lineIndex;
-        }
-    }
-
-    PutWindowTilemap(WIN_MON_PAGE_CONTENT);
-    CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
 static const struct BgTemplate sDiplomaBgTemplates[2] =
@@ -3808,6 +3495,10 @@ static u8 Overview_GetMaxScrollAmount()
 //
 u32 GetPokedexMonPersonality(u16 species);
 
+void LoadMoveTypesSpritesheetAndPalette();
+u8 CreateMonTypeIcon(u16 typeId, u8 x, u8 y);
+void DestroyMonTypIcon(u8 spriteId);
+
 static void MonInfo_CreateSprites(bool8 includeType)
 {
     // display as shiny if we have seen it
@@ -3879,24 +3570,6 @@ static void MonInfo_DestroySprites()
 
             case MON_SPRITE_TYPE1:
             case MON_SPRITE_TYPE2:
-            case MON_SPRITE_MATCHUP1:
-            case MON_SPRITE_MATCHUP2:
-            case MON_SPRITE_MATCHUP3:
-            case MON_SPRITE_MATCHUP4:
-            case MON_SPRITE_MATCHUP5:
-            case MON_SPRITE_MATCHUP6:
-            case MON_SPRITE_MATCHUP7:
-            case MON_SPRITE_MATCHUP8:
-            case MON_SPRITE_MATCHUP9:
-            case MON_SPRITE_MATCHUP10:
-            case MON_SPRITE_MATCHUP11:
-            case MON_SPRITE_MATCHUP12:
-            case MON_SPRITE_MATCHUP13:
-            case MON_SPRITE_MATCHUP14:
-            case MON_SPRITE_MATCHUP15:
-            case MON_SPRITE_MATCHUP16:
-            case MON_SPRITE_MATCHUP17:
-            case MON_SPRITE_MATCHUP18:
                 DestroyMonTypIcon(spriteId);
                 break;
                 
@@ -4493,44 +4166,6 @@ static void MonForms_CreateSprites()
         }
     }
 #endif
-}
-
-static void MonTypeMatchups_HandleInput(u8 taskId)
-{
-    u16 maxScrollOffset;
-
-    if(MonInfo_HandleInput(taskId))
-        return;
-
-    maxScrollOffset = GetMaxTypeMatchupScrollOffset();
-
-    if(maxScrollOffset == 0)
-    {
-        if(JOY_NEW(DPAD_UP) || JOY_NEW(DPAD_DOWN))
-            PlaySE(SE_FAILURE);
-        return;
-    }
-
-    if(JOY_REPEAT(DPAD_UP))
-    {
-        if(sPokedexMenu->listScrollAmount == 0)
-            sPokedexMenu->listScrollAmount = maxScrollOffset;
-        else
-            --sPokedexMenu->listScrollAmount;
-
-        PlaySE(SE_DEX_SCROLL);
-        DisplayMonTypeMatchupsText();
-    }
-    else if(JOY_REPEAT(DPAD_DOWN))
-    {
-        if(sPokedexMenu->listScrollAmount == maxScrollOffset)
-            sPokedexMenu->listScrollAmount = 0;
-        else
-            ++sPokedexMenu->listScrollAmount;
-
-        PlaySE(SE_DEX_SCROLL);
-        DisplayMonTypeMatchupsText();
-    }
 }
 
 static void MonRideStats_HandleInput(u8 taskId)

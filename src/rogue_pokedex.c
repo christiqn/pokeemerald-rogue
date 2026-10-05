@@ -2414,16 +2414,14 @@ static void DisplayMonTypeMatchupsText()
         {
             // The first line has room for 3 icons beside the multiplier.
             // Continuation lines have room for 4 icons.
-            if(lineIconStart == 0)
-                iconsOnLine = min(typeCount, 3);
-            else
-                iconsOnLine = min(typeCount - lineIconStart, 4);
+            iconsOnLine = min(typeCount - lineIconStart, 3);
 
             if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
             {
                 displayLine = lineIndex - sPokedexMenu->listScrollAmount;
 
-                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, multiplierText);
+                if(lineIconStart == 0)
+                    AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, multiplierText);
 
                 // Find the types belonging to this specific line. Start from the
                 // beginning of the type list, but skip the types on previous lines.
@@ -2446,7 +2444,7 @@ static void DisplayMonTypeMatchupsText()
                             // CreateMonTypeIcon adds +16 to X and +8 to Y.
                             // Use 32-pixel spacing so the 32x-ish type icons do not overlap.
                             // The +8 Y offset is accounted for by CreateMonTypeIcon; use 24 so the icon sits lower in the row.
-                            u8 iconX = (lineIconStart == 0 ? 117 : 109) + 34 * iconIndex;
+                            u8 iconX = (lineIconStart == 0 ? 123 : 109) + 34 * iconIndex;
                             u8 iconY = 24 + ySpacing * displayLine;
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
                             ++displaySprite;

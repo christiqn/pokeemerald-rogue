@@ -828,6 +828,7 @@ struct
 
 static const u8 sPartyMenuAction_SummarySwitchCancel[] = {MENU_SUMMARY, MENU_SWITCH, MENU_CANCEL1};
 static const u8 sPartyMenuAction_ShiftSummaryCancel[] = {MENU_SHIFT, MENU_SUMMARY, MENU_CANCEL1};
+static const u8 sPartyMenuAction_ShiftPokedexSummaryCancel[] = {MENU_SHIFT, MENU_POKEDEX, MENU_SUMMARY, MENU_CANCEL1};
 static const u8 sPartyMenuAction_SendOutSummaryCancel[] = {MENU_SEND_OUT, MENU_SUMMARY, MENU_CANCEL1};
 static const u8 sPartyMenuAction_SummaryCancel[] = {MENU_SUMMARY, MENU_CANCEL1};
 static const u8 sPartyMenuAction_EnterSummaryCancel[] = {MENU_ENTER, MENU_SUMMARY, MENU_CANCEL1};
@@ -849,6 +850,7 @@ static const u8 *const sPartyMenuActions[] =
     [ACTIONS_NONE]          = NULL,
     [ACTIONS_SWITCH]        = sPartyMenuAction_SummarySwitchCancel,
     [ACTIONS_SHIFT]         = sPartyMenuAction_ShiftSummaryCancel,
+    [ACTIONS_SHIFT_POKEDEX] = sPartyMenuAction_ShiftPokedexSummaryCancel,
     [ACTIONS_SEND_OUT]      = sPartyMenuAction_SendOutSummaryCancel,
     [ACTIONS_ENTER]         = sPartyMenuAction_EnterSummaryCancel,
     [ACTIONS_NO_ENTRY]      = sPartyMenuAction_NoEntrySummaryCancel,
@@ -871,6 +873,7 @@ static const u8 sPartyMenuActionCounts[] =
     [ACTIONS_NONE]          = 0,
     [ACTIONS_SWITCH]        = ARRAY_COUNT(sPartyMenuAction_SummarySwitchCancel),
     [ACTIONS_SHIFT]         = ARRAY_COUNT(sPartyMenuAction_ShiftSummaryCancel),
+    [ACTIONS_SHIFT_POKEDEX] = ARRAY_COUNT(sPartyMenuAction_ShiftPokedexSummaryCancel),
     [ACTIONS_SEND_OUT]      = ARRAY_COUNT(sPartyMenuAction_SendOutSummaryCancel),
     [ACTIONS_ENTER]         = ARRAY_COUNT(sPartyMenuAction_EnterSummaryCancel),
     [ACTIONS_NO_ENTRY]      = ARRAY_COUNT(sPartyMenuAction_NoEntrySummaryCancel),

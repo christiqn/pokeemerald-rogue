@@ -131,6 +131,7 @@ enum {
     ACTIONS_NONE,
     ACTIONS_SWITCH,
     ACTIONS_SHIFT,
+    ACTIONS_SHIFT_POKEDEX,
     ACTIONS_SEND_OUT,
     ACTIONS_ENTER,
     ACTIONS_NO_ENTRY,
@@ -528,6 +529,7 @@ static void CursorCb_RelearnMoves(u8);
 static void CursorCb_Evolve(u8);
 static void CursorCb_CycleSubMenu(u8);
 static void CursorCb_Pokedex(u8);
+void Rogue_ShowPokedexFromBattlePartySlot(u8 slot);
 static void CursorCb_FieldMove(u8);
 static void CursorCb_CatalogBulb(u8);
 static void CursorCb_CatalogOven(u8);
@@ -4186,13 +4188,19 @@ static void Task_ExitPartyMenuToPokedex(u8 taskId)
         FreePartyPointers();
 
         DestroyTask(taskId);
-        Rogue_ShowPokedexForPartySlot(slot);
+        if (gPartyMenu.menuType == PARTY_MENU_TYPE_IN_BATTLE)
+            Rogue_ShowPokedexFromBattlePartySlot(slot);
+        else
+            Rogue_ShowPokedexForPartySlot(slot);
     }
 }
 
 static void CursorCb_Pokedex(u8 taskId)
 {
     PlaySE(SE_SELECT);
+
+    // The battle variant remembers the selected party slot and returns to
+    // the battle screen when the Pokédex is closed.
 
     // Variant of ExitPartyMenu
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
@@ -8329,7 +8337,7 @@ static u8 GetPartyMenuActionsTypeInBattle(struct Pokemon *mon)
         if (gPartyMenu.action == PARTY_ACTION_SEND_OUT)
             return ACTIONS_SEND_OUT;
         if (!(gBattleTypeFlags & BATTLE_TYPE_ARENA))
-            return ACTIONS_SHIFT;
+            return ACTIONS_SHIFT_POKEDEX;
     }
     return ACTIONS_SUMMARY_ONLY;
 }

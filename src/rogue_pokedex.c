@@ -392,6 +392,7 @@ struct PokedexViewRequest
 {
     u8 view : 7;
     u8 inBattleScreen : 1;
+    bool8 battlePartySlotView;
     u16 dexVariantToRestore;
     union
     {
@@ -451,6 +452,8 @@ static u16 GetSpeciesAtSlot(u8 slot)
 {
     if(sPokedexViewReq.inBattleScreen)
     {
+        if(sPokedexViewReq.battlePartySlotView)
+            return GetMonData(&gPlayerParty[slot], MON_DATA_SPECIES);
 #ifdef ROGUE_EXPANSION
         if(GetBattlerSide(slot) != B_SIDE_PLAYER)
         {
@@ -473,6 +476,8 @@ static u32 GetOtIdAtSlot(u8 slot)
 {
     if(sPokedexViewReq.inBattleScreen)
     {
+        if(sPokedexViewReq.battlePartySlotView)
+            return GetMonData(&gPlayerParty[slot], MON_DATA_OT_ID);
 #ifdef ROGUE_EXPANSION
         if(GetBattlerSide(slot) != B_SIDE_PLAYER)
         {
@@ -495,6 +500,9 @@ static u32 GetHpAtSlot(u8 slot)
 {
     if(sPokedexViewReq.inBattleScreen)
     {
+        if(sPokedexViewReq.battlePartySlotView)
+            return GetMonData(&gPlayerParty[slot], MON_DATA_HP);
+
         return gBattleMons[slot].hp;
     }
     else
@@ -507,6 +515,7 @@ static void SetupPokedexViewDefault()
 {
     sPokedexViewReq.view = DEX_VIEW_STANDARD;
     sPokedexViewReq.inBattleScreen = FALSE;
+    sPokedexViewReq.battlePartySlotView = FALSE;
     sPokedexViewReq.dexVariantToRestore = POKEDEX_INVALID_VARIANT;
     SetMainCallback2(CB2_Rogue_ShowPokedex);
 }
@@ -544,6 +553,22 @@ void Rogue_ShowPokedexForPartySlot(u8 slot)
 
     // ReturnToPartyMenuSubMenu called below
     sPokedexViewReq.view = DEX_VIEW_SPECIFIC_MON;
+    sPokedexViewReq.perView.specificMon.species = GetSpeciesAtSlot(slot);
+    sPokedexViewReq.perView.specificMon.OtId = GetOtIdAtSlot(slot);
+    sPokedexViewReq.perView.specificMon.partySlot = slot;
+}
+
+void Rogue_ShowPokedexFromBattlePartySlot(u8 slot)
+{
+    SetupPokedexViewDefault();
+
+    // Keep the battle-screen return path, but read the selected Pokemon from
+    // the battle-ordered party rather than from gBattleMons. This supports
+    // any of the six party slots, including Pokemon that are not currently
+    // on the field.
+    sPokedexViewReq.view = DEX_VIEW_SPECIFIC_MON;
+    sPokedexViewReq.inBattleScreen = TRUE;
+    sPokedexViewReq.battlePartySlotView = TRUE;
     sPokedexViewReq.perView.specificMon.species = GetSpeciesAtSlot(slot);
     sPokedexViewReq.perView.specificMon.OtId = GetOtIdAtSlot(slot);
     sPokedexViewReq.perView.specificMon.partySlot = slot;
@@ -2272,8 +2297,12 @@ static void DisplayMonRideStatsText()
 
 static u16 GetPokedexCurrentAbility(void)
 {
-    if(sPokedexMenu->partySlot < PARTY_SIZE
-        && GetMonData(&gPlayerParty[sPokedexMenu->partySlot], MON_DATA_SPECIES) == sPokedexMenu->viewBaseSpecies)
+    // When the Pokédex is opened for a specific party Pokémon, use the
+    // actual ability from that party slot. Do not compare species IDs here:
+    // Rogue can display a base/form species ID that does not exactly match
+    // the raw species ID stored on the party Pokémon.
+    if(sPokedexViewReq.view == DEX_VIEW_SPECIFIC_MON
+        && sPokedexMenu->partySlot < PARTY_SIZE)
     {
         return GetMonData(&gPlayerParty[sPokedexMenu->partySlot], MON_DATA_ABILITY);
     }
@@ -3894,7 +3923,9 @@ static u16 MonStats_GetMonNeighbour(u16 currViewSpecies, s8 offset)
     // Loop through party when using L/R from that menu
     if(sPokedexViewReq.view == DEX_VIEW_SPECIFIC_MON)
     {
-        u8 partyCount = sPokedexViewReq.inBattleScreen ? MAX_BATTLERS_COUNT : gPlayerPartyCount;
+        u8 partyCount = sPokedexViewReq.inBattleScreen
+            ? (sPokedexViewReq.battlePartySlotView ? PARTY_SIZE : MAX_BATTLERS_COUNT)
+            : gPlayerPartyCount;
 
         do
         {

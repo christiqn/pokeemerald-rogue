@@ -90,6 +90,24 @@ enum
     MON_SPRITE_EVO_ICON2,
     MON_SPRITE_EVO_ICON3,
     MON_SPRITE_EVO_ICON4,
+    MON_SPRITE_MATCHUP1,
+    MON_SPRITE_MATCHUP2,
+    MON_SPRITE_MATCHUP3,
+    MON_SPRITE_MATCHUP4,
+    MON_SPRITE_MATCHUP5,
+    MON_SPRITE_MATCHUP6,
+    MON_SPRITE_MATCHUP7,
+    MON_SPRITE_MATCHUP8,
+    MON_SPRITE_MATCHUP9,
+    MON_SPRITE_MATCHUP10,
+    MON_SPRITE_MATCHUP11,
+    MON_SPRITE_MATCHUP12,
+    MON_SPRITE_MATCHUP13,
+    MON_SPRITE_MATCHUP14,
+    MON_SPRITE_MATCHUP15,
+    MON_SPRITE_MATCHUP16,
+    MON_SPRITE_MATCHUP17,
+    MON_SPRITE_MATCHUP18,
     MON_SPRITE_COUNT,
 };
 
@@ -243,6 +261,12 @@ static const u8 sText_NoDataFound[] = _("{COLOR RED}{SHADOW LIGHT_RED}No data fo
 static const u8 sText_Add[] = _("+");
 static const u8 sText_Minus[] = _("-");
 
+static const u8 sText_X4[] = _("x4");
+static const u8 sText_X2[] = _("x2");
+static const u8 sText_XHalf[] = _("x1/2");
+static const u8 sText_XQuarter[] = _("x1/4");
+static const u8 sText_X0[] = _("0x");
+
 extern const u8 gText_DexNational[];
 extern const u8 gText_DexHoenn[];
 extern const u8 gText_PokedexDiploma[];
@@ -297,6 +321,10 @@ static u8 Overview_GetMaxScrollAmount();
 // MonInfo
 static void MonInfo_CreateSprites(bool8 includeType);
 static void MonInfo_DestroySprites();
+void LoadMoveTypesSpritesheetAndPalette(void);
+u8 CreateMonTypeIcon(u16 typeId, u8 x, u8 y);
+void DestroyMonTypIcon(u8 spriteId);
+static void DestroyMonTypeMatchupSprites(void);
 
 // Mon stats
 static void MonStats_HandleInput(u8);
@@ -321,6 +349,9 @@ static void MonForms_CreateSprites();
 
 // Ride stats
 static void MonRideStats_HandleInput(u8);
+
+// Type matchups
+static void MonTypeMatchups_HandleInput(u8);
 
 struct PokedexMenu
 {
@@ -1013,7 +1044,7 @@ static void Task_PageWaitForKeyPress(u8 taskId)
         break;
 
     case PAGE_MON_TYPE_MATCHUPS:
-        MonRideStats_HandleInput(taskId);   // todocq
+        MonTypeMatchups_HandleInput(taskId);
         break;
     
     default:
@@ -2239,9 +2270,144 @@ static void DisplayMonRideStatsText()
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
+static uq4_12_t GetTypeMatchupMultiplier(u8 attackType, u8 type1, u8 type2)
+{
+    uq4_12_t multiplier = GetTypeModifier(attackType, type1);
+
+    if(type2 != type1)
+        multiplier = uq4_12_multiply(multiplier, GetTypeModifier(attackType, type2));
+
+    return multiplier;
+}
+
+static u8 GetTypeMatchupCount()
+{
+    u8 i;
+    u8 type1 = GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 0, sPokedexMenu->viewOtId);
+    u8 type2 = GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 1, sPokedexMenu->viewOtId);
+    u8 count = 0;
+    uq4_12_t multiplier;
+
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeMatchupMultiplier(i, type1, type2);
+        if(multiplier == UQ_4_12(4.0))
+            ++count;
+    }
+
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeMatchupMultiplier(i, type1, type2);
+        if(multiplier == UQ_4_12(2.0))
+            ++count;
+    }
+
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeMatchupMultiplier(i, type1, type2);
+        if(multiplier == UQ_4_12(0.5))
+            ++count;
+    }
+
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeMatchupMultiplier(i, type1, type2);
+        if(multiplier == UQ_4_12(0.25))
+            ++count;
+    }
+
+    for(i = 0; i < NUMBER_OF_MON_TYPES; ++i)
+    {
+        if(i == TYPE_MYSTERY)
+            continue;
+
+        multiplier = GetTypeMatchupMultiplier(i, type1, type2);
+        if(multiplier == UQ_4_12(0.0))
+            ++count;
+    }
+
+    return count;
+}
+
+static u16 GetMaxTypeMatchupScrollOffset()
+{
+    u16 count = GetTypeMatchupCount();
+    return count - min(count, MAX_LIST_DISPLAY_COUNT);
+}
+
+static void DestroyMonTypeMatchupSprites()
+{
+    u8 i;
+
+    for(i = 0; i < MAX_LIST_DISPLAY_COUNT; ++i)
+    {
+        u8 spriteId = sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + i];
+
+        if(spriteId != SPRITE_NONE)
+        {
+            DestroyMonTypIcon(spriteId);
+            sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + i] = SPRITE_NONE;
+        }
+    }
+}
+
 static void DisplayMonTypeMatchupsText()
 {
+    u8 i;
+    u8 listIndex = 0;
+    u8 displayCount = 0;
+    u8 const ySpacing = 16;
+    u8 const color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
+    u8 type1 = GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 0, sPokedexMenu->viewOtId);
+    u8 type2 = GetTypeBySpecies(sPokedexMenu->viewBaseSpecies, 1, sPokedexMenu->viewOtId);
+    uq4_12_t multiplier;
 
+    AddTitleText(sTitle_TypeMatchups);
+
+    FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
+    DestroyMonTypeMatchupSprites();
+
+    // Rows are ordered: 4x, 2x, 1/2x, 1/4x, 0x.
+#define DISPLAY_MATCHUP_ROW(expectedMultiplier, multiplierText) \
+    for(i = 0; i < NUMBER_OF_MON_TYPES && displayCount < MAX_LIST_DISPLAY_COUNT; ++i) \
+    { \
+        if(i == TYPE_MYSTERY) \
+            continue; \
+        multiplier = GetTypeMatchupMultiplier(i, type1, type2); \
+        if(multiplier == (expectedMultiplier)) \
+        { \
+            if(listIndex >= sPokedexMenu->listScrollAmount) \
+            { \
+                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayCount + 4, 0, 0, color, TEXT_SKIP_DRAW, (multiplierText)); \
+                sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displayCount] = CreateMonTypeIcon(i, 96, 24 + ySpacing * displayCount); \
+                ++displayCount; \
+            } \
+            ++listIndex; \
+        } \
+    }
+
+    DISPLAY_MATCHUP_ROW(UQ_4_12(4.0), sText_X4);
+    DISPLAY_MATCHUP_ROW(UQ_4_12(2.0), sText_X2);
+    DISPLAY_MATCHUP_ROW(UQ_4_12(0.5), sText_XHalf);
+    DISPLAY_MATCHUP_ROW(UQ_4_12(0.25), sText_XQuarter);
+    DISPLAY_MATCHUP_ROW(UQ_4_12(0.0), sText_X0);
+
+#undef DISPLAY_MATCHUP_ROW
+
+    PutWindowTilemap(WIN_MON_PAGE_CONTENT);
+    CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
 static const struct BgTemplate sDiplomaBgTemplates[2] =
@@ -3470,10 +3636,6 @@ static u8 Overview_GetMaxScrollAmount()
 //
 u32 GetPokedexMonPersonality(u16 species);
 
-void LoadMoveTypesSpritesheetAndPalette();
-u8 CreateMonTypeIcon(u16 typeId, u8 x, u8 y);
-void DestroyMonTypIcon(u8 spriteId);
-
 static void MonInfo_CreateSprites(bool8 includeType)
 {
     // display as shiny if we have seen it
@@ -3545,6 +3707,24 @@ static void MonInfo_DestroySprites()
 
             case MON_SPRITE_TYPE1:
             case MON_SPRITE_TYPE2:
+            case MON_SPRITE_MATCHUP1:
+            case MON_SPRITE_MATCHUP2:
+            case MON_SPRITE_MATCHUP3:
+            case MON_SPRITE_MATCHUP4:
+            case MON_SPRITE_MATCHUP5:
+            case MON_SPRITE_MATCHUP6:
+            case MON_SPRITE_MATCHUP7:
+            case MON_SPRITE_MATCHUP8:
+            case MON_SPRITE_MATCHUP9:
+            case MON_SPRITE_MATCHUP10:
+            case MON_SPRITE_MATCHUP11:
+            case MON_SPRITE_MATCHUP12:
+            case MON_SPRITE_MATCHUP13:
+            case MON_SPRITE_MATCHUP14:
+            case MON_SPRITE_MATCHUP15:
+            case MON_SPRITE_MATCHUP16:
+            case MON_SPRITE_MATCHUP17:
+            case MON_SPRITE_MATCHUP18:
                 DestroyMonTypIcon(spriteId);
                 break;
                 
@@ -4139,6 +4319,44 @@ static void MonForms_CreateSprites()
         }
     }
 #endif
+}
+
+static void MonTypeMatchups_HandleInput(u8 taskId)
+{
+    u16 maxScrollOffset;
+
+    if(MonInfo_HandleInput(taskId))
+        return;
+
+    maxScrollOffset = GetMaxTypeMatchupScrollOffset();
+
+    if(maxScrollOffset == 0)
+    {
+        if(JOY_NEW(DPAD_UP) || JOY_NEW(DPAD_DOWN))
+            PlaySE(SE_FAILURE);
+        return;
+    }
+
+    if(JOY_REPEAT(DPAD_UP))
+    {
+        if(sPokedexMenu->listScrollAmount == 0)
+            sPokedexMenu->listScrollAmount = maxScrollOffset;
+        else
+            --sPokedexMenu->listScrollAmount;
+
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonTypeMatchupsText();
+    }
+    else if(JOY_REPEAT(DPAD_DOWN))
+    {
+        if(sPokedexMenu->listScrollAmount == maxScrollOffset)
+            sPokedexMenu->listScrollAmount = 0;
+        else
+            ++sPokedexMenu->listScrollAmount;
+
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonTypeMatchupsText();
+    }
 }
 
 static void MonRideStats_HandleInput(u8 taskId)

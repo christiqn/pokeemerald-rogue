@@ -2446,7 +2446,7 @@ static void DisplayMonTypeMatchupsText()
                             // CreateMonTypeIcon adds +16 to X and +8 to Y.
                             // Use 32-pixel spacing so the 32x-ish type icons do not overlap.
                             // The +8 Y offset is accounted for by CreateMonTypeIcon; use 24 so the icon sits lower in the row.
-                            u8 iconX = (lineIconStart == 0 ? 112 : 104) + 32 * iconIndex;
+                            u8 iconX = (lineIconStart == 0 ? 117 : 109) + 34 * iconIndex;
                             u8 iconY = 24 + ySpacing * displayLine;
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
                             ++displaySprite;

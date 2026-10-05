@@ -2272,8 +2272,12 @@ static void DisplayMonRideStatsText()
 
 static u16 GetPokedexCurrentAbility(void)
 {
-    if(sPokedexMenu->partySlot < PARTY_SIZE
-        && GetMonData(&gPlayerParty[sPokedexMenu->partySlot], MON_DATA_SPECIES) == sPokedexMenu->viewBaseSpecies)
+    // When the Pokédex is opened for a specific party Pokémon, use the
+    // actual ability from that party slot. Do not compare species IDs here:
+    // Rogue can display a base/form species ID that does not exactly match
+    // the raw species ID stored on the party Pokémon.
+    if(sPokedexViewReq.view == DEX_VIEW_SPECIFIC_MON
+        && sPokedexMenu->partySlot < PARTY_SIZE)
     {
         return GetMonData(&gPlayerParty[sPokedexMenu->partySlot], MON_DATA_ABILITY);
     }

@@ -390,8 +390,9 @@ enum
 
 struct PokedexViewRequest
 {
-    u8 view : 7;
+    u8 view : 6;
     u8 inBattleScreen : 1;
+    u8 battlePartySlotView : 1;
     u16 dexVariantToRestore;
     union
     {
@@ -449,7 +450,7 @@ static const u32 sPageTiles[] = INCBIN_U32("graphics/rogue_pokedex/page_tiles.4b
 
 static u16 GetSpeciesAtSlot(u8 slot)
 {
-    if(sPokedexViewReq.inBattleScreen)
+    if(sPokedexViewReq.inBattleScreen && !sPokedexViewReq.battlePartySlotView)
     {
 #ifdef ROGUE_EXPANSION
         if(GetBattlerSide(slot) != B_SIDE_PLAYER)
@@ -471,7 +472,7 @@ static u16 GetSpeciesAtSlot(u8 slot)
 
 static u32 GetOtIdAtSlot(u8 slot)
 {
-    if(sPokedexViewReq.inBattleScreen)
+    if(sPokedexViewReq.inBattleScreen && !sPokedexViewReq.battlePartySlotView)
     {
 #ifdef ROGUE_EXPANSION
         if(GetBattlerSide(slot) != B_SIDE_PLAYER)
@@ -493,7 +494,7 @@ static u32 GetOtIdAtSlot(u8 slot)
 
 static u32 GetHpAtSlot(u8 slot)
 {
-    if(sPokedexViewReq.inBattleScreen)
+    if(sPokedexViewReq.inBattleScreen && !sPokedexViewReq.battlePartySlotView)
     {
         return gBattleMons[slot].hp;
     }
@@ -507,6 +508,7 @@ static void SetupPokedexViewDefault()
 {
     sPokedexViewReq.view = DEX_VIEW_STANDARD;
     sPokedexViewReq.inBattleScreen = FALSE;
+    sPokedexViewReq.battlePartySlotView = FALSE;
     sPokedexViewReq.dexVariantToRestore = POKEDEX_INVALID_VARIANT;
     SetMainCallback2(CB2_Rogue_ShowPokedex);
 }
@@ -544,6 +546,18 @@ void Rogue_ShowPokedexForPartySlot(u8 slot)
 
     // ReturnToPartyMenuSubMenu called below
     sPokedexViewReq.view = DEX_VIEW_SPECIFIC_MON;
+    sPokedexViewReq.perView.specificMon.species = GetSpeciesAtSlot(slot);
+    sPokedexViewReq.perView.specificMon.OtId = GetOtIdAtSlot(slot);
+    sPokedexViewReq.perView.specificMon.partySlot = slot;
+}
+
+void Rogue_ShowPokedexFromBattlePartySlot(u8 slot)
+{
+    SetupPokedexViewDefault();
+
+    sPokedexViewReq.view = DEX_VIEW_SPECIFIC_MON;
+    sPokedexViewReq.inBattleScreen = TRUE;
+    sPokedexViewReq.battlePartySlotView = TRUE;
     sPokedexViewReq.perView.specificMon.species = GetSpeciesAtSlot(slot);
     sPokedexViewReq.perView.specificMon.OtId = GetOtIdAtSlot(slot);
     sPokedexViewReq.perView.specificMon.partySlot = slot;
@@ -3806,7 +3820,12 @@ static u16 MonStats_GetMonNeighbour(u16 currViewSpecies, s8 offset)
     // Loop through party when using L/R from that menu
     if(sPokedexViewReq.view == DEX_VIEW_SPECIFIC_MON)
     {
-        u8 partyCount = sPokedexViewReq.inBattleScreen ? MAX_BATTLERS_COUNT : gPlayerPartyCount;
+        u8 partyCount;
+
+        if(sPokedexViewReq.inBattleScreen)
+            partyCount = sPokedexViewReq.battlePartySlotView ? PARTY_SIZE : MAX_BATTLERS_COUNT;
+        else
+            partyCount = gPlayerPartyCount;
 
         do
         {

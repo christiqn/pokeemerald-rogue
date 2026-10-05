@@ -4199,9 +4199,6 @@ static void CursorCb_Pokedex(u8 taskId)
 {
     PlaySE(SE_SELECT);
 
-    // The battle variant remembers the selected party slot and returns to
-    // the battle screen when the Pokédex is closed.
-
     // Variant of ExitPartyMenu
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
     CreateTask(Task_ExitPartyMenuToPokedex, 0);

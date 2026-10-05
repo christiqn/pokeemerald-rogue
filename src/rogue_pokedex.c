@@ -2270,94 +2270,6 @@ static void DisplayMonRideStatsText()
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
-static u16 GetPokedexCurrentAbility(void)
-{
-    if(sPokedexMenu->partySlot < PARTY_SIZE
-        && GetMonData(&gPlayerParty[sPokedexMenu->partySlot], MON_DATA_SPECIES) == sPokedexMenu->viewBaseSpecies)
-    {
-        return GetMonData(&gPlayerParty[sPokedexMenu->partySlot], MON_DATA_ABILITY);
-    }
-
-    // The normal species Pokédex has no single active ability, so do not
-    // apply one of the species' possible abilities to the type chart.
-    return ABILITY_NONE;
-}
-
-static uq4_12_t ApplyPokedexAbilityTypeModifier(u8 attackType, uq4_12_t multiplier)
-{
-    u16 ability = GetPokedexCurrentAbility();
-
-    switch(ability)
-    {
-    // Complete type immunities / absorptions.
-    case ABILITY_LEVITATE:
-        if(attackType == TYPE_GROUND)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_VOLT_ABSORB:
-    case ABILITY_LIGHTNING_ROD:
-    case ABILITY_MOTOR_DRIVE:
-        if(attackType == TYPE_ELECTRIC)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_WATER_ABSORB:
-    case ABILITY_STORM_DRAIN:
-        if(attackType == TYPE_WATER)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_FLASH_FIRE:
-        if(attackType == TYPE_FIRE)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_DRY_SKIN:
-        if(attackType == TYPE_WATER)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_SAP_SIPPER:
-        if(attackType == TYPE_GRASS)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_EARTH_EATER:
-        if(attackType == TYPE_GROUND)
-            return UQ_4_12(0.0);
-        break;
-    case ABILITY_WELL_BAKED_BODY:
-        if(attackType == TYPE_FIRE)
-            return UQ_4_12(0.0);
-        break;
-
-    // Defensive type-based damage reductions.
-    case ABILITY_THICK_FAT:
-        if(attackType == TYPE_FIRE || attackType == TYPE_ICE)
-            multiplier = uq4_12_multiply(multiplier, UQ_4_12(0.5));
-        break;
-    case ABILITY_HEATPROOF:
-        if(attackType == TYPE_FIRE)
-            multiplier = uq4_12_multiply(multiplier, UQ_4_12(0.5));
-        break;
-    case ABILITY_WATER_BUBBLE:
-        if(attackType == TYPE_FIRE)
-            multiplier = uq4_12_multiply(multiplier, UQ_4_12(0.5));
-        break;
-    case ABILITY_PURIFYING_SALT:
-        if(attackType == TYPE_GHOST)
-            multiplier = uq4_12_multiply(multiplier, UQ_4_12(0.5));
-        break;
-    // Filter, Solid Rock and Prism Armor reduce super-effective damage by
-    // 25%, which can produce 1.5x/3x values. Those values do not fit the
-    // five categories displayed by this page, so they are intentionally
-    // not folded into this type-only chart.
-    case ABILITY_WONDER_GUARD:
-        if(multiplier <= UQ_4_12(1.0))
-            return UQ_4_12(0.0);
-        break;
-    default:
-        break;
-    }
-
-    return multiplier;
-}
-
 static uq4_12_t GetTypeMatchupMultiplier(u8 attackType, u8 type1, u8 type2)
 {
     uq4_12_t multiplier = GetTypeModifier(attackType, type1);
@@ -2365,7 +2277,7 @@ static uq4_12_t GetTypeMatchupMultiplier(u8 attackType, u8 type1, u8 type2)
     if(type2 != type1)
         multiplier = uq4_12_multiply(multiplier, GetTypeModifier(attackType, type2));
 
-    return ApplyPokedexAbilityTypeModifier(attackType, multiplier);
+    return multiplier;
 }
 
 static u8 GetTypeMatchupCount(u8 category)
@@ -2532,7 +2444,7 @@ static void DisplayMonTypeMatchupsText()
                             // CreateMonTypeIcon adds +16 to X and +8 to Y.
                             // Use 32-pixel spacing so the 32x-ish type icons do not overlap.
                             // The +8 Y offset is accounted for by CreateMonTypeIcon; use 24 so the icon sits lower in the row.
-                            u8 iconX = (lineIconStart == 0 ? 111 : 109) + 34 * iconIndex;
+                            u8 iconX = (lineIconStart == 0 ? 123 : 109) + 34 * iconIndex;
                             u8 iconY = 24 + ySpacing * displayLine;
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
                             ++displaySprite;

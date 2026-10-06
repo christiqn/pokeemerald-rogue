@@ -551,7 +551,7 @@ void Rogue_ShowPokedexForPartySlot(u8 slot)
     sPokedexViewReq.perView.specificMon.partySlot = slot;
 }
 
-void ReturnToPartyMenuSubMenuInBattle(void);
+void ReturnToPartyMenuSubMenuInBattle(u8 slot);
 
 void Rogue_ShowPokedexFromBattlePartySlot(u8 slot)
 {
@@ -1094,6 +1094,8 @@ static void Task_PageFadeOutAndExit(u8 taskId)
 {
     if (!gPaletteFade.active)
     {
+        u8 partySlot = sPokedexMenu->partySlot;
+
         if(sPokedexViewReq.dexVariantToRestore != POKEDEX_INVALID_VARIANT)
             RoguePokedex_SetDexVariant(sPokedexViewReq.dexVariantToRestore);
 
@@ -1120,7 +1122,7 @@ static void Task_PageFadeOutAndExit(u8 taskId)
             if(sPokedexViewReq.inBattleScreen)
             {
                 if(sPokedexViewReq.battlePartySlotView)
-                    ReturnToPartyMenuSubMenuInBattle();
+                    ReturnToPartyMenuSubMenuInBattle(partySlot);
                 else
                     SetMainCallback2(CB2_SetUpReshowBattleScreenAfterMenu2);
             }

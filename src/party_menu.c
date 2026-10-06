@@ -8829,10 +8829,11 @@ void ReturnToPartyMenuSubMenu(void)
     //CreateTask(Task_ChooseMonForMoveRelearner, 10);
 }
 
-void ReturnToPartyMenuSubMenuInBattle(void)
+void ReturnToPartyMenuSubMenuInBattle(u8 slot)
 {
     u8 partyAction = gPartyMenu.action;
 
+    gPartyMenu.slotId = slot;
     InitPartyMenu(PARTY_MENU_TYPE_IN_BATTLE, GetPartyLayoutFromBattleType(), partyAction, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_SetUpReshowBattleScreenAfterMenu);
     ReshowBattleScreenDummy();
     UpdatePartyToBattleOrder();

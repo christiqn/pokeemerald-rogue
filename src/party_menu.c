@@ -131,6 +131,7 @@ enum {
     ACTIONS_NONE,
     ACTIONS_SWITCH,
     ACTIONS_SHIFT,
+    ACTIONS_SHIFT_POKEDEX,
     ACTIONS_SEND_OUT,
     ACTIONS_ENTER,
     ACTIONS_NO_ENTRY,
@@ -528,6 +529,7 @@ static void CursorCb_RelearnMoves(u8);
 static void CursorCb_Evolve(u8);
 static void CursorCb_CycleSubMenu(u8);
 static void CursorCb_Pokedex(u8);
+void Rogue_ShowPokedexFromBattlePartySlot(u8 slot);
 static void CursorCb_FieldMove(u8);
 static void CursorCb_CatalogBulb(u8);
 static void CursorCb_CatalogOven(u8);
@@ -4186,7 +4188,10 @@ static void Task_ExitPartyMenuToPokedex(u8 taskId)
         FreePartyPointers();
 
         DestroyTask(taskId);
-        Rogue_ShowPokedexForPartySlot(slot);
+        if (gPartyMenu.menuType == PARTY_MENU_TYPE_IN_BATTLE)
+            Rogue_ShowPokedexFromBattlePartySlot(slot);
+        else
+            Rogue_ShowPokedexForPartySlot(slot);
     }
 }
 
@@ -8329,7 +8334,7 @@ static u8 GetPartyMenuActionsTypeInBattle(struct Pokemon *mon)
         if (gPartyMenu.action == PARTY_ACTION_SEND_OUT)
             return ACTIONS_SEND_OUT;
         if (!(gBattleTypeFlags & BATTLE_TYPE_ARENA))
-            return ACTIONS_SHIFT;
+            return ACTIONS_SHIFT_POKEDEX;
     }
     return ACTIONS_SUMMARY_ONLY;
 }
@@ -8822,6 +8827,16 @@ void ReturnToPartyMenuSubMenu(void)
     // From CB2_PartyMenuFromStartMenu
     InitPartyMenu(PARTY_MENU_TYPE_FIELD, PARTY_LAYOUT_SINGLE, PARTY_ACTION_CHOOSE_MON, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_ReturnToFieldWithOpenMenu);
     //CreateTask(Task_ChooseMonForMoveRelearner, 10);
+}
+
+void ReturnToPartyMenuSubMenuInBattle(u8 slot)
+{
+    u8 partyAction = gPartyMenu.action;
+
+    gPartyMenu.slotId = slot;
+    InitPartyMenu(PARTY_MENU_TYPE_IN_BATTLE, GetPartyLayoutFromBattleType(), partyAction, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_SetUpReshowBattleScreenAfterMenu);
+    ReshowBattleScreenDummy();
+    UpdatePartyToBattleOrder();
 }
 
 static void Task_ChooseMonForMoveRelearner(u8 taskId)

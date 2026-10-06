@@ -1115,7 +1115,7 @@ static void Task_PageFadeOutAndExit(u8 taskId)
 
         if(sPokedexViewReq.view == DEX_VIEW_SPECIFIC_MON)
         {
-            if(sPokedexViewReq.inBattleScreen)
+            if(sPokedexViewReq.inBattleScreen && !sPokedexViewReq.battlePartySlotView)
                 SetMainCallback2(CB2_SetUpReshowBattleScreenAfterMenu2);
             else
                 ReturnToPartyMenuSubMenu();

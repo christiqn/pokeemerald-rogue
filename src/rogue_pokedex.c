@@ -77,7 +77,7 @@ enum
     PAGE_MON_TYPE_DETAILS,
 
     PAGE_MON_FIRST = PAGE_MON_STATS,
-    PAGE_MON_LAST = PAGE_MON_TYPE_DETAILS, //good
+    PAGE_MON_LAST = PAGE_MON_TYPE_MATCHUPS,
 };
 
 enum
@@ -977,8 +977,8 @@ static void Task_SwapToPage2(u8);
 static void Task_SwapToPage(u8 taskId)
 {
     // If we're moving between stats page for the same mon, don't bother doing a fade
-    if(sPokedexMenu->currentPage >= PAGE_MON_FIRST && sPokedexMenu->currentPage <= PAGE_MON_LAST && 
-        sPokedexMenu->desiredPage >= PAGE_MON_FIRST && sPokedexMenu->desiredPage <= PAGE_MON_TYPE_DETAILS)
+    if(((sPokedexMenu->currentPage >= PAGE_MON_FIRST && sPokedexMenu->currentPage <= PAGE_MON_LAST) || sPokedexMenu->currentPage == PAGE_MON_TYPE_DETAILS)
+        && sPokedexMenu->desiredPage >= PAGE_MON_FIRST && sPokedexMenu->desiredPage <= PAGE_MON_TYPE_DETAILS)
     {
         gTasks[taskId].tDoFade = FALSE;//(sPokedexMenu->lastCrySpecies != sPokedexMenu->viewBaseSpecies);
     }
@@ -2535,8 +2535,9 @@ static u8 GetTypeDetailsLineCount(u8 type)
 {
     u8 section;
     u8 category;
-    u8 lineCount = 1; // Selected type name.
+    u8 lineCount = 0;
 
+    // The selected type name occupies a fixed, non-scrolling header row.
     for(section = 0; section < 2; ++section)
     {
         lineCount += 1; // Section header.
@@ -2554,7 +2555,9 @@ static u8 GetTypeDetailsLineCount(u8 type)
 static u16 GetTypeDetailsMaxScrollOffset(u8 type)
 {
     u16 lineCount = GetTypeDetailsLineCount(type);
-    return lineCount - min(lineCount, MAX_LIST_DISPLAY_COUNT);
+    u16 visibleLines = MAX_LIST_DISPLAY_COUNT - 1; // One row is reserved for the fixed type name.
+
+    return lineCount - min(lineCount, visibleLines);
 }
 
 static void DisplayMonTypeDetailsText()
@@ -2581,8 +2584,8 @@ static void DisplayMonTypeDetailsText()
     FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
     DestroyMonTypeMatchupSprites();
 
-    AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * lineIndex + 2, 0, 0, color, TEXT_SKIP_DRAW, gTypeNames[selectedType]);
-    ++lineIndex;
+    // Keep the selected type name fixed at the top while the matchup details scroll underneath it.
+    AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 2, 0, 0, color, TEXT_SKIP_DRAW, gTypeNames[selectedType]);
 
     for(category = 0; category < 6; ++category)
     {
@@ -2597,9 +2600,9 @@ static void DisplayMonTypeDetailsText()
 
         if(sectionText != NULL)
         {
-            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
+            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 1))
             {
-                displayLine = lineIndex - sPokedexMenu->listScrollAmount;
+                displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, sectionText);
             }
             ++lineIndex;
@@ -2624,13 +2627,13 @@ static void DisplayMonTypeDetailsText()
         typeCount = GetTypeDetailsCategoryCount(selectedType, isAttack, detailCategory);
 
         // Category label.
-        if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
+        if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 1))
         {
-            displayLine = lineIndex - sPokedexMenu->listScrollAmount;
+            displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
             AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, categoryText);
 
             if(typeCount == 0)
-                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 82, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, gText_PokedexEvoNoData);
+                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 82, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, sText_SkillNone);
         }
         ++lineIndex;
 
@@ -2643,9 +2646,9 @@ static void DisplayMonTypeDetailsText()
         {
             u8 iconsOnLine = min(typeCount - lineIconStart, 3);
 
-            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
+            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 1))
             {
-                displayLine = lineIndex - sPokedexMenu->listScrollAmount;
+                displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
                 iconIndex = 0;
 
                 for(typeIndex = 0; typeIndex < NUMBER_OF_MON_TYPES && iconIndex < iconsOnLine; ++typeIndex)
@@ -2661,7 +2664,7 @@ static void DisplayMonTypeDetailsText()
                     {
                         if(displaySprite < 18)
                         {
-                            u8 iconX = 123 + 34 * iconIndex;
+                            u8 iconX = 123 + 33 * iconIndex;
                             u8 iconY = 24 + ySpacing * displayLine;
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
                             ++displaySprite;
@@ -2789,12 +2792,12 @@ static void DisplayMonTypeMatchupsText()
                             // CreateMonTypeIcon adds +16 to X and +8 to Y.
                             // Use 32-pixel spacing so the 32x-ish type icons do not overlap.
                             // The +8 Y offset is accounted for by CreateMonTypeIcon; use 24 so the icon sits lower in the row.
-                            u8 iconX = (lineIconStart == 0 ? 123 : 109) + 34 * iconIndex;
+                            u8 iconX = (lineIconStart == 0 ? 123 : 109) + 33 * iconIndex;
                             u8 iconY = 24 + ySpacing * displayLine;
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
 
                             if(typeIndex == selectedType)
-                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 116 : 102) + 34 * iconIndex, ySpacing * displayLine + 8, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
+                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 116 : 102) + 33 * iconIndex, ySpacing * displayLine + 8, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
 
                             ++displaySprite;
                         }
@@ -4373,8 +4376,6 @@ static bool8 MonInfo_HandleInput(u8 taskId)
 
 static void MonStats_HandleInput(u8 taskId)
 {
-    if(MonInfo_HandleInput(taskId))
-        return;
 
     if(JOY_NEW(A_BUTTON) && Rogue_HasSpeciesBeenRevised(sPokedexMenu->viewBaseSpecies, REVISION_FLAG_POKEDEX_ICON))
     {
@@ -4527,9 +4528,6 @@ static bool8 MonEvos_IsTutorMoveRevised(u16 moveIdx, struct RoguePokemonProfile 
 
 static void MonEvos_HandleInput(u8 taskId)
 {
-    if(MonInfo_HandleInput(taskId))
-        return;
-
     if(JOY_REPEAT(DPAD_UP))
     {
         u16 maxScrollOffset = GetMaxEvoScrollOffset();
@@ -4778,10 +4776,10 @@ static void MonTypeMatchups_HandleInput(u8 taskId)
     }
     else if(JOY_REPEAT(DPAD_UP))
     {
-        if(sPokedexMenu->typeMatchupSelectedIndex >= 3)
-            sPokedexMenu->typeMatchupSelectedIndex -= 3;
-        else
+        if(sPokedexMenu->typeMatchupSelectedIndex == 0)
             sPokedexMenu->typeMatchupSelectedIndex = total - 1;
+        else
+            --sPokedexMenu->typeMatchupSelectedIndex;
 
         UpdateTypeMatchupSelectionScroll();
         PlaySE(SE_DEX_SCROLL);
@@ -4789,10 +4787,10 @@ static void MonTypeMatchups_HandleInput(u8 taskId)
     }
     else if(JOY_REPEAT(DPAD_DOWN))
     {
-        if(sPokedexMenu->typeMatchupSelectedIndex + 3 < total)
-            sPokedexMenu->typeMatchupSelectedIndex += 3;
-        else
+        if(sPokedexMenu->typeMatchupSelectedIndex >= total - 1)
             sPokedexMenu->typeMatchupSelectedIndex = 0;
+        else
+            ++sPokedexMenu->typeMatchupSelectedIndex;
 
         UpdateTypeMatchupSelectionScroll();
         PlaySE(SE_DEX_SCROLL);
@@ -4809,9 +4807,6 @@ static void MonTypeDetails_HandleInput(u8 taskId)
         PlaySE(SE_PIN);
         return;
     }
-
-    if(MonInfo_HandleInput(taskId))
-        return;
 
     if(JOY_REPEAT(DPAD_UP))
     {

@@ -77,7 +77,7 @@ enum
     PAGE_MON_TYPE_DETAILS,
 
     PAGE_MON_FIRST = PAGE_MON_STATS,
-    PAGE_MON_LAST = PAGE_MON_TYPE_MATCHUPS, //good
+    PAGE_MON_LAST = PAGE_MON_TYPE_DETAILS, //good
 };
 
 enum
@@ -953,9 +953,11 @@ static void DestroyPageResources(u8 fromPage, u8 toPage)
 
 static void Task_SetupPage(u8 taskId)
 {
+    u8 fromPage = sPokedexMenu->currentPage;
+
     DestroyPageResources(sPokedexMenu->currentPage, sPokedexMenu->desiredPage);
     InitPageResources(sPokedexMenu->currentPage, sPokedexMenu->desiredPage);
-    
+
     sPokedexMenu->currentPage = sPokedexMenu->desiredPage;
 
     if(sPokedexMenu->currentPage == PAGE_MON_TYPE_MATCHUPS && fromPage != PAGE_MON_TYPE_DETAILS)
@@ -963,7 +965,6 @@ static void Task_SetupPage(u8 taskId)
 
     if(gTasks[taskId].tDoFade)
     {
-        // Fade into page
         BlendPalettes(PALETTES_ALL, 16, RGB_BLACK);
         BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
     }
@@ -2398,11 +2399,7 @@ static u8 GetTypeMatchupLineCount()
         count = GetTypeMatchupCount(category);
 
         if(count != 0)
-        {
-            // The multiplier uses the first 3 icon slots on its line.
-            // Continuation lines can fit 4 icons each.
-            lineCount += 1 + ((count > 3) ? (count - 3 + 3) / 4 : 0);
-        }
+            lineCount += (count + 2) / 3;
     }
 
     return lineCount;

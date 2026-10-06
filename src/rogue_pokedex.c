@@ -551,6 +551,8 @@ void Rogue_ShowPokedexForPartySlot(u8 slot)
     sPokedexViewReq.perView.specificMon.partySlot = slot;
 }
 
+void ReturnToPartyMenuSubMenuInBattle(void);
+
 void Rogue_ShowPokedexFromBattlePartySlot(u8 slot)
 {
     SetupPokedexViewDefault();
@@ -1115,10 +1117,17 @@ static void Task_PageFadeOutAndExit(u8 taskId)
 
         if(sPokedexViewReq.view == DEX_VIEW_SPECIFIC_MON)
         {
-            if(sPokedexViewReq.inBattleScreen && !sPokedexViewReq.battlePartySlotView)
-                SetMainCallback2(CB2_SetUpReshowBattleScreenAfterMenu2);
+            if(sPokedexViewReq.inBattleScreen)
+            {
+                if(sPokedexViewReq.battlePartySlotView)
+                    ReturnToPartyMenuSubMenuInBattle();
+                else
+                    SetMainCallback2(CB2_SetUpReshowBattleScreenAfterMenu2);
+            }
             else
+            {
                 ReturnToPartyMenuSubMenu();
+            }
         }
         else
         {

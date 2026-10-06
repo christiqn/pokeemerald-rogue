@@ -8829,6 +8829,15 @@ void ReturnToPartyMenuSubMenu(void)
     //CreateTask(Task_ChooseMonForMoveRelearner, 10);
 }
 
+void ReturnToPartyMenuSubMenuInBattle(void)
+{
+    u8 partyAction = gPartyMenu.action;
+
+    InitPartyMenu(PARTY_MENU_TYPE_IN_BATTLE, GetPartyLayoutFromBattleType(), partyAction, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_SetUpReshowBattleScreenAfterMenu);
+    ReshowBattleScreenDummy();
+    UpdatePartyToBattleOrder();
+}
+
 static void Task_ChooseMonForMoveRelearner(u8 taskId)
 {
     if (!gPaletteFade.active)

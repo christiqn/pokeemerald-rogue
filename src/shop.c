@@ -2328,6 +2328,9 @@ static u32 GetShopItemPrice(u16 item)
     }
     else if (sMartInfo.martType == MART_TYPE_NORMAL || sMartInfo.martType == MART_TYPE_PURCHASE_ONLY || sMartInfo.martType == MART_TYPE_SINGLE_PURCHASE)
     {
+        if(item == ITEM_RARE_CANDY && !Rogue_IsRunActive())
+            return 25;
+
         u32 price = Mart_GetItemPrice(item) >> IsPokeNewsActive(POKENEWS_SLATEPORT);
 
         if(ShowTMView())

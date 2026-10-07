@@ -284,16 +284,16 @@ static const u8 sText_X4[] = _("x4");
 static const u8 sText_X2[] = _("x2");
 static const u8 sText_XHalf[] = _("x1/2");
 static const u8 sText_XQuarter[] = _("x1/4");
-static const u8 sText_X0[] = _("0x");
+static const u8 sText_X0[] = _("x0");
 static const u8 sText_AbilityEffects[] = _("Ability Effects:");
-static const u8 sText_AbilityGround0[] = _(" : Ground -> 0x");
-static const u8 sText_AbilityElectric0[] = _(" : Electric -> 0x");
-static const u8 sText_AbilityWater0[] = _(" : Water -> 0x");
-static const u8 sText_AbilityFire0[] = _(" : Fire -> 0x");
-static const u8 sText_AbilityGrass0[] = _(" : Grass -> 0x");
+static const u8 sText_AbilityGround0[] = _(" : Ground -> x0");
+static const u8 sText_AbilityElectric0[] = _(" : Electric -> x0");
+static const u8 sText_AbilityWater0[] = _(" : Water -> x0");
+static const u8 sText_AbilityFire0[] = _(" : Fire -> x0");
+static const u8 sText_AbilityGrass0[] = _(" : Grass -> x0");
 static const u8 sText_AbilityFireIceHalf[] = _(" : Fire/Ice -> 50% reduction");
 static const u8 sText_AbilityFireHalf[] = _(" : Fire -> 50% reduction");
-static const u8 sText_AbilityDrySkin[] = _(" : Water -> 0x, Fire -> 1.25x");
+static const u8 sText_AbilityDrySkin[] = _(" : Water -> x0, Fire -> 1.25x");
 static const u8 sText_AbilityFluffy[] = _(" : Fire -> 2x");
 static const u8 sText_AbilityGhostHalf[] = _(" : Ghost -> 50% reduction");
 
@@ -2512,7 +2512,12 @@ static void UpdateTypeMatchupSelectionScroll()
     selectedLine = sPokedexMenu->typeMatchupSelectedIndex / 3;
     maxScrollOffset = GetMaxTypeMatchupScrollOffset();
 
-    if(selectedLine < sPokedexMenu->listScrollAmount)
+    // If the last matchup is selected, allow the user to keep scrolling down
+    // into the Ability Effects section without moving the type selection.
+    // Otherwise, keep the selected matchup visible as normal.
+    if(selectedLine < sPokedexMenu->listScrollAmount
+       && !(selectedLine == GetTypeMatchupLineCount() - 1
+            && sPokedexMenu->listScrollAmount <= maxScrollOffset))
         sPokedexMenu->listScrollAmount = selectedLine;
     else if(selectedLine >= sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
         sPokedexMenu->listScrollAmount = min(maxScrollOffset, selectedLine - MAX_LIST_DISPLAY_COUNT + 1);
@@ -4988,12 +4993,23 @@ static void MonTypeMatchups_HandleInput(u8 taskId)
     }
     else if(JOY_REPEAT(DPAD_DOWN))
     {
-        if(sPokedexMenu->typeMatchupSelectedIndex >= total - 1)
-            sPokedexMenu->typeMatchupSelectedIndex = 0;
+        // Once the final matchup is selected, continue scrolling through the
+        // Ability Effects section before wrapping the selection back to the top.
+        if(sPokedexMenu->typeMatchupSelectedIndex >= total - 1
+           && sPokedexMenu->listScrollAmount < GetMaxTypeMatchupScrollOffset())
+        {
+            ++sPokedexMenu->listScrollAmount;
+        }
         else
-            ++sPokedexMenu->typeMatchupSelectedIndex;
+        {
+            if(sPokedexMenu->typeMatchupSelectedIndex >= total - 1)
+                sPokedexMenu->typeMatchupSelectedIndex = 0;
+            else
+                ++sPokedexMenu->typeMatchupSelectedIndex;
 
-        UpdateTypeMatchupSelectionScroll();
+            UpdateTypeMatchupSelectionScroll();
+        }
+
         PlaySE(SE_DEX_SCROLL);
         DisplayMonTypeMatchupsText();
     }

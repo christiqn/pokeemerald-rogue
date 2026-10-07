@@ -2531,6 +2531,39 @@ static u8 GetTypeDetailsCategoryCount(u8 type, bool8 isAttack, u8 category)
     return count;
 }
 
+static u8 GetTypeDetailsTypeAtIndex(u8 type, bool8 isAttack, u8 category, u8 index)
+{
+    u8 typeIndex;
+    u8 matchIndex = 0;
+    uq4_12_t expectedMultiplier;
+
+    switch(category)
+    {
+    case 0: expectedMultiplier = UQ_4_12(2.0); break;
+    case 1: expectedMultiplier = UQ_4_12(0.5); break;
+    default: expectedMultiplier = UQ_4_12(0.0); break;
+    }
+
+    for(typeIndex = 0; typeIndex < NUMBER_OF_MON_TYPES; ++typeIndex)
+    {
+        uq4_12_t multiplier;
+
+        if(typeIndex == TYPE_MYSTERY)
+            continue;
+
+        multiplier = isAttack ? GetTypeModifier(type, typeIndex) : GetTypeModifier(typeIndex, type);
+        if(multiplier != expectedMultiplier)
+            continue;
+
+        if(matchIndex == index)
+            return typeIndex;
+
+        ++matchIndex;
+    }
+
+    return TYPE_MYSTERY;
+}
+
 static u8 GetTypeDetailsLineCount(u8 type)
 {
     u8 section;
@@ -2554,7 +2587,7 @@ static u8 GetTypeDetailsLineCount(u8 type)
 static u16 GetTypeDetailsMaxScrollOffset(u8 type)
 {
     u16 lineCount = GetTypeDetailsLineCount(type);
-    u16 visibleLines = MAX_LIST_DISPLAY_COUNT - 1;
+    u16 visibleLines = MAX_LIST_DISPLAY_COUNT - 2;
 
     return lineCount - min(lineCount, visibleLines);
 }
@@ -2569,12 +2602,9 @@ static void DisplayMonTypeDetailsText()
     u8 typeCount;
     u8 iconIndex;
     u8 lineIconStart;
-    u8 matchIndex;
     u8 selectedType = sPokedexMenu->typeDetailsType;
     u8 const ySpacing = 16;
     u8 const color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
-    uq4_12_t multiplier;
-    uq4_12_t expectedMultiplier;
     const u8 *sectionText;
     const u8 *categoryText;
 
@@ -2599,7 +2629,7 @@ static void DisplayMonTypeDetailsText()
 
         if(sectionText != NULL)
         {
-            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 1))
+            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
             {
                 displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, sectionText);
@@ -2608,25 +2638,16 @@ static void DisplayMonTypeDetailsText()
         }
 
         if(detailCategory == 0)
-        {
-            expectedMultiplier = UQ_4_12(2.0);
             categoryText = isAttack ? sText_Effective : sText_WeakTo;
-        }
         else if(detailCategory == 1)
-        {
-            expectedMultiplier = UQ_4_12(0.5);
             categoryText = isAttack ? sText_NotVeryEffective : sText_Resists;
-        }
         else
-        {
-            expectedMultiplier = UQ_4_12(0.0);
             categoryText = isAttack ? sText_NoEffect : sText_ImmuneTo;
-        }
 
         typeCount = GetTypeDetailsCategoryCount(selectedType, isAttack, detailCategory);
 
         // Category label.
-        if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 1))
+        if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
         {
             displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
             AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, categoryText);
@@ -2640,50 +2661,24 @@ static void DisplayMonTypeDetailsText()
             continue;
 
         lineIconStart = 0;
-        matchIndex = 0;
         while(lineIconStart < typeCount)
         {
             u8 iconsOnLine = min(typeCount - lineIconStart, 3);
 
-            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 1))
+            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
             {
                 displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
-                iconIndex = 0;
 
-                for(typeIndex = 0; typeIndex < NUMBER_OF_MON_TYPES && iconIndex < iconsOnLine; ++typeIndex)
+                for(iconIndex = 0; iconIndex < iconsOnLine; ++iconIndex)
                 {
-                    if(typeIndex == TYPE_MYSTERY)
-                        continue;
-
-                    multiplier = isAttack ? GetTypeModifier(selectedType, typeIndex) : GetTypeModifier(typeIndex, selectedType);
-                    if(multiplier != expectedMultiplier)
-                        continue;
-
-                    if(matchIndex >= lineIconStart)
+                    typeIndex = GetTypeDetailsTypeAtIndex(selectedType, isAttack, detailCategory, lineIconStart + iconIndex);
+                    if(typeIndex != TYPE_MYSTERY && displaySprite < 18)
                     {
-                        if(displaySprite < 18)
-                        {
-                            u8 iconX = 123 + 33 * iconIndex;
-                            u8 iconY = 24 + ySpacing * displayLine;
-                            sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
-                            ++displaySprite;
-                        }
-                        ++iconIndex;
+                        u8 iconX = 123 + 33 * iconIndex;
+                        u8 iconY = 24 + ySpacing * displayLine;
+                        sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
+                        ++displaySprite;
                     }
-                    ++matchIndex;
-                }
-            }
-            else
-            {
-                // Advance matchIndex past the types on this off-screen line.
-                for(typeIndex = 0; typeIndex < NUMBER_OF_MON_TYPES && matchIndex < lineIconStart + iconsOnLine; ++typeIndex)
-                {
-                    if(typeIndex == TYPE_MYSTERY)
-                        continue;
-
-                    multiplier = isAttack ? GetTypeModifier(selectedType, typeIndex) : GetTypeModifier(typeIndex, selectedType);
-                    if(multiplier == expectedMultiplier)
-                        ++matchIndex;
                 }
             }
 
@@ -2796,7 +2791,7 @@ static void DisplayMonTypeMatchupsText()
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
 
                             if(typeIndex == selectedType)
-                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 116 : 102) + 33 * iconIndex, ySpacing * displayLine + 8, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
+                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 35 : 21) + 33 * iconIndex, ySpacing * displayLine + 8, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
 
                             ++displaySprite;
                         }

@@ -2663,9 +2663,10 @@ static void DisplayMonTypeDetailsText()
                 {
                     displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
 
-                    // Match the Type Matchups layout: multiplier at the left,
-                    // first row starts farther right, wrapped rows are indented less.
-                    AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, multiplierText);
+                    // Match the Type Matchups layout: show the multiplier only on
+                    // the first row of each category; wrapped rows contain icons only.
+                    if(lineIconStart == 0)
+                        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, multiplierText);
 
                     for(iconIndex = 0; iconIndex < iconsOnLine; ++iconIndex)
                     {
@@ -2796,7 +2797,12 @@ static void DisplayMonTypeMatchupsText()
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
 
                             if(typeIndex == selectedType)
-                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 19 : 5) + 33 * iconIndex, ySpacing * displayLine - 1, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
+                            {
+                                // Keep the selected arrow at the current vertical position,
+                                // but move it into the window on the first row so it is not clipped.
+                                u8 arrowY = (displayLine == 0) ? 0 : ySpacing * displayLine - 1;
+                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 19 : 5) + 33 * iconIndex, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
+                            }
 
                             ++displaySprite;
                         }

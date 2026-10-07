@@ -77,7 +77,7 @@ enum
     PAGE_MON_TYPE_DETAILS,
 
     PAGE_MON_FIRST = PAGE_MON_STATS,
-    PAGE_MON_LAST = PAGE_MON_TYPE_MATCHUPS,
+    PAGE_MON_LAST = PAGE_MON_TYPE_DETAILS, //good
 };
 
 enum
@@ -977,8 +977,8 @@ static void Task_SwapToPage2(u8);
 static void Task_SwapToPage(u8 taskId)
 {
     // If we're moving between stats page for the same mon, don't bother doing a fade
-    if(((sPokedexMenu->currentPage >= PAGE_MON_FIRST && sPokedexMenu->currentPage <= PAGE_MON_LAST) || sPokedexMenu->currentPage == PAGE_MON_TYPE_DETAILS)
-        && sPokedexMenu->desiredPage >= PAGE_MON_FIRST && sPokedexMenu->desiredPage <= PAGE_MON_TYPE_DETAILS)
+    if(sPokedexMenu->currentPage >= PAGE_MON_FIRST && sPokedexMenu->currentPage <= PAGE_MON_LAST && 
+        sPokedexMenu->desiredPage >= PAGE_MON_FIRST && sPokedexMenu->desiredPage <= PAGE_MON_TYPE_DETAILS)
     {
         gTasks[taskId].tDoFade = FALSE;//(sPokedexMenu->lastCrySpecies != sPokedexMenu->viewBaseSpecies);
     }
@@ -2537,7 +2537,6 @@ static u8 GetTypeDetailsLineCount(u8 type)
     u8 category;
     u8 lineCount = 0;
 
-    // The selected type name occupies a fixed, non-scrolling header row.
     for(section = 0; section < 2; ++section)
     {
         lineCount += 1; // Section header.
@@ -2555,7 +2554,7 @@ static u8 GetTypeDetailsLineCount(u8 type)
 static u16 GetTypeDetailsMaxScrollOffset(u8 type)
 {
     u16 lineCount = GetTypeDetailsLineCount(type);
-    u16 visibleLines = MAX_LIST_DISPLAY_COUNT - 1; // One row is reserved for the fixed type name.
+    u16 visibleLines = MAX_LIST_DISPLAY_COUNT - 1;
 
     return lineCount - min(lineCount, visibleLines);
 }
@@ -2584,7 +2583,7 @@ static void DisplayMonTypeDetailsText()
     FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
     DestroyMonTypeMatchupSprites();
 
-    // Keep the selected type name fixed at the top while the matchup details scroll underneath it.
+    // Keep the selected type name fixed at the top of the content window.
     AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 2, 0, 0, color, TEXT_SKIP_DRAW, gTypeNames[selectedType]);
 
     for(category = 0; category < 6; ++category)
@@ -4287,6 +4286,10 @@ static u8 NavigateNextMonPage(u8 startPage, u8 dir)
                 currentPage = PAGE_MON_FIRST;
             else
                 ++currentPage;
+
+            // PAGE_MON_TYPE_DETAILS is a subpage of Type Matchups, not a normal Pokédex page.
+            if(currentPage == PAGE_MON_TYPE_DETAILS)
+                currentPage = PAGE_MON_FIRST;
         }
         else // if(dir == -1)
         {
@@ -4294,6 +4297,10 @@ static u8 NavigateNextMonPage(u8 startPage, u8 dir)
                 currentPage = PAGE_MON_LAST;
             else
                 --currentPage;
+
+            // PAGE_MON_TYPE_DETAILS is a subpage of Type Matchups, not a normal Pokédex page.
+            if(currentPage == PAGE_MON_TYPE_DETAILS)
+                currentPage = PAGE_MON_LAST - 1;
         }
 
         if(IsMonPageUnlocked(currentPage))
@@ -4376,6 +4383,8 @@ static bool8 MonInfo_HandleInput(u8 taskId)
 
 static void MonStats_HandleInput(u8 taskId)
 {
+    if(MonInfo_HandleInput(taskId))
+        return;
 
     if(JOY_NEW(A_BUTTON) && Rogue_HasSpeciesBeenRevised(sPokedexMenu->viewBaseSpecies, REVISION_FLAG_POKEDEX_ICON))
     {
@@ -4528,6 +4537,9 @@ static bool8 MonEvos_IsTutorMoveRevised(u16 moveIdx, struct RoguePokemonProfile 
 
 static void MonEvos_HandleInput(u8 taskId)
 {
+    if(MonInfo_HandleInput(taskId))
+        return;
+
     if(JOY_REPEAT(DPAD_UP))
     {
         u16 maxScrollOffset = GetMaxEvoScrollOffset();

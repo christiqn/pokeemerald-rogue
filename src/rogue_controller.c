@@ -9396,6 +9396,11 @@ void Rogue_OpenMartQuery(u16 difficulty, u16 itemCategory, u16* minSalePrice)
         if(applyPriceRange)
             RogueItemQuery_InPriceRange(QUERY_FUNC_INCLUDE, 10, maxPriceRange);
 
+        // Rare Candy is available in the out-of-run General Shop even though its
+        // normal item price is above the shop's standard price range.
+        if(!Rogue_IsRunActive() && itemCategory == ROGUE_SHOP_GENERAL)
+            RogueMiscQuery_EditElement(QUERY_FUNC_INCLUDE, ITEM_RARE_CANDY);
+
         if(Rogue_IsRunActive())
         {
             // Always allow to always buy revives if players have this on

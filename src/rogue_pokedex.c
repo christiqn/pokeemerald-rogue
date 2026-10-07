@@ -2800,7 +2800,7 @@ static void DisplayMonTypeMatchupsText()
                             {
                                 // Keep the selected arrow at the current vertical position,
                                 // but move it into the window on the first row so it is not clipped.
-                                u8 arrowY = (displayLine == 0) ? 0 : ySpacing * displayLine - 1;
+                                u8 arrowY = (displayLine == 0) ? 1 : ySpacing * displayLine;
                                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 19 : 5) + 33 * iconIndex, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
                             }
 

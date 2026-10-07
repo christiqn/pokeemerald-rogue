@@ -286,22 +286,23 @@ static const u8 sText_XHalf[] = _("x1/2");
 static const u8 sText_XQuarter[] = _("x1/4");
 static const u8 sText_X0[] = _("x0");
 static const u8 sText_AbilityEffects[] = _("Ability Effects:");
-static const u8 sText_AbilityGround0[] = _(" : Ground -> x0");
-static const u8 sText_AbilityElectric0[] = _(" : Electric -> x0");
-static const u8 sText_AbilityWater0[] = _(" : Water -> x0");
-static const u8 sText_AbilityFire0[] = _(" : Fire -> x0");
-static const u8 sText_AbilityGrass0[] = _(" : Grass -> x0");
-static const u8 sText_AbilityFireIceHalf[] = _(" : Fire/Ice -> 50% reduction");
-static const u8 sText_AbilityFireHalf[] = _(" : Fire -> 50% reduction");
-static const u8 sText_AbilityDrySkin[] = _(" : Water -> x0, Fire -> 1.25x");
-static const u8 sText_AbilityFluffy[] = _(" : Fire -> 2x");
-static const u8 sText_AbilityGhostHalf[] = _(" : Ghost -> 50% reduction");
-static const u8 sText_AbilityFireIceHalfStart[] = _(" : Fire/Ice ->");
-static const u8 sText_AbilityFireHalfStart[] = _(" : Fire ->");
-static const u8 sText_AbilityDrySkinStart[] = _(" : Water -> x0,");
+static const u8 sText_AbilityGround0[] = _(": Ground -> x0");
+static const u8 sText_AbilityElectric0[] = _(": Electric -> x0");
+static const u8 sText_AbilityWater0[] = _(": Water -> x0");
+static const u8 sText_AbilityFire0[] = _(": Fire -> x0");
+static const u8 sText_AbilityGrass0[] = _(": Grass -> x0");
+static const u8 sText_AbilityFireIceHalf[] = _(": Fire/Ice -> 50% reduction");
+static const u8 sText_AbilityFireHalf[] = _(": Fire -> 50% reduction");
+static const u8 sText_AbilityDrySkin[] = _(": Water -> x0, Fire -> 1.25x");
+static const u8 sText_AbilityFluffy[] = _(": Fire -> 2x");
+static const u8 sText_AbilityGhostHalf[] = _(": Ghost -> 50% reduction");
+static const u8 sText_AbilityFireIceHalfStart[] = _(": Fire/Ice ->");
+static const u8 sText_AbilityFireHalfStart[] = _(": Fire ->");
+static const u8 sText_AbilityDrySkinStart[] = _(": Water -> x0,");
 static const u8 sText_AbilityHalfReduction[] = _("50% reduction");
+static const u8 sText_AbilityElectricImmune[] = _("x0");
 static const u8 sText_AbilityDrySkinFire[] = _("Fire -> 1.25x");
-static const u8 sText_AbilityGhostHalfStart[] = _(" : Ghost ->");
+static const u8 sText_AbilityGhostHalfStart[] = _(": Ghost ->");
 
 extern const u8 gText_DexNational[];
 extern const u8 gText_DexHoenn[];
@@ -2534,7 +2535,7 @@ static void UpdateTypeMatchupSelectionScroll()
     {
         u8 abilityLines = GetAbilityTypeMatchupLineCount();
         if(abilityLines != 0 && selectedLine == GetTypeMatchupLineCount() - 1)
-            sPokedexMenu->listScrollAmount = min(maxScrollOffset, (u16)selectedLine);
+            sPokedexMenu->listScrollAmount = maxScrollOffset;
     }
 }
 
@@ -2793,6 +2794,9 @@ static bool8 AbilityTypeMatchupEffectNeedsWrap(u16 ability)
     switch(ability)
     {
     case ABILITY_THICK_FAT:
+    case ABILITY_LIGHTNING_ROD:
+    case ABILITY_VOLT_ABSORB:
+    case ABILITY_MOTOR_DRIVE:
     case ABILITY_WATER_BUBBLE:
     case ABILITY_HEATPROOF:
     case ABILITY_DRY_SKIN:
@@ -2908,6 +2912,11 @@ static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scroll
     {
         switch(ability)
         {
+        case ABILITY_LIGHTNING_ROD:
+        case ABILITY_VOLT_ABSORB:
+        case ABILITY_MOTOR_DRIVE:
+            StringCopy(gStringVar3, sText_AbilityElectricImmune);
+            break;
         case ABILITY_THICK_FAT:
         case ABILITY_WATER_BUBBLE:
         case ABILITY_HEATPROOF:

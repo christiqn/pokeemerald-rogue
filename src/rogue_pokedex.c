@@ -2522,13 +2522,15 @@ static void UpdateTypeMatchupSelectionScroll()
     else if(selectedLine >= sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
         sPokedexMenu->listScrollAmount = min(maxScrollOffset, selectedLine - MAX_LIST_DISPLAY_COUNT + 1);
 
-    // When ability effects are present, keep enough room at the bottom to show
-    // the effects when the final matchup line is selected.
+    // When ability effects are present, automatically scroll to the bottom
+    // portion of the page as soon as the final matchup line is selected. This
+    // keeps the selected type visible while also revealing the effects below it.
     {
         u8 abilityLines = GetAbilityTypeMatchupLineCount();
         if(abilityLines != 0 && selectedLine == GetTypeMatchupLineCount() - 1)
         {
-            u16 desiredScroll = selectedLine - min(selectedLine, MAX_LIST_DISPLAY_COUNT - abilityLines - 1);
+            u8 matchupLinesVisible = MAX_LIST_DISPLAY_COUNT - min(abilityLines, MAX_LIST_DISPLAY_COUNT - 1);
+            u16 desiredScroll = selectedLine > matchupLinesVisible ? selectedLine - matchupLinesVisible : 0;
             sPokedexMenu->listScrollAmount = min(maxScrollOffset, desiredScroll);
         }
     }
@@ -2784,20 +2786,56 @@ static u8 GetAbilityTypeMatchupEffectCount()
     return count;
 }
 
+static bool8 AbilityTypeMatchupEffectNeedsWrap(u16 ability)
+{
+    switch(ability)
+    {
+    case ABILITY_THICK_FAT:
+    case ABILITY_WATER_BUBBLE:
+    case ABILITY_HEATPROOF:
+    case ABILITY_DRY_SKIN:
+    case ABILITY_PURIFYING_SALT:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static u8 GetAbilityTypeMatchupEffectLineCount(u16 ability)
+{
+    return AbilityTypeMatchupEffectNeedsWrap(ability) ? 2 : 1;
+}
+
 static u8 GetAbilityTypeMatchupLineCount()
 {
+    u8 i;
     u8 count = GetAbilityTypeMatchupEffectCount();
-    return count == 0 ? 0 : count + 1; // Heading + one line per ability.
+    u8 lineCount = count == 0 ? 0 : 1; // Heading.
+
+    if(count == 0)
+        return 0;
+
+    for(i = 0; i < NUM_ABILITY_SLOTS; ++i)
+    {
+        u16 ability = GetAbilityBySpecies(sPokedexMenu->viewBaseSpecies, i, sPokedexMenu->viewOtId);
+
+        if(ability != ABILITY_NONE && !AbilityWasAlreadyChecked(ability, i) && IsAbilityTypeMatchupEffect(ability))
+            lineCount += GetAbilityTypeMatchupEffectLineCount(ability);
+    }
+
+    return lineCount;
 }
 
 static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scrollAmount, const u8 color[3], u8 ySpacing)
 {
     u8 displayLine;
+    bool8 needsWrap = AbilityTypeMatchupEffectNeedsWrap(ability);
 
-    if(lineIndex < scrollAmount || lineIndex >= scrollAmount + MAX_LIST_DISPLAY_COUNT)
+    // A wrapped effect occupies two lines. Only skip the entire effect when
+    // both of its lines are above the visible area.
+    if(lineIndex + GetAbilityTypeMatchupEffectLineCount(ability) <= scrollAmount
+       || lineIndex >= scrollAmount + MAX_LIST_DISPLAY_COUNT)
         return;
-
-    displayLine = lineIndex - scrollAmount;
 
     switch(ability)
     {
@@ -2829,15 +2867,15 @@ static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scroll
     case ABILITY_THICK_FAT:
     case ABILITY_WATER_BUBBLE:
         StringCopy(gStringVar4, gAbilityNames[ability]);
-        StringAppend(gStringVar4, sText_AbilityFireIceHalf);
+        StringAppend(gStringVar4, _(" : Fire/Ice ->"));
         break;
     case ABILITY_HEATPROOF:
         StringCopy(gStringVar4, gAbilityNames[ability]);
-        StringAppend(gStringVar4, sText_AbilityFireHalf);
+        StringAppend(gStringVar4, _(" : Fire ->"));
         break;
     case ABILITY_DRY_SKIN:
         StringCopy(gStringVar4, gAbilityNames[ability]);
-        StringAppend(gStringVar4, sText_AbilityDrySkin);
+        StringAppend(gStringVar4, _(" : Water -> x0,"));
         break;
     case ABILITY_FLUFFY:
         StringCopy(gStringVar4, gAbilityNames[ability]);
@@ -2845,7 +2883,7 @@ static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scroll
         break;
     case ABILITY_PURIFYING_SALT:
         StringCopy(gStringVar4, gAbilityNames[ability]);
-        StringAppend(gStringVar4, sText_AbilityGhostHalf);
+        StringAppend(gStringVar4, _(" : Ghost ->"));
         break;
     case ABILITY_EARTH_EATER:
         StringCopy(gStringVar4, gAbilityNames[ability]);
@@ -2855,7 +2893,35 @@ static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scroll
         return;
     }
 
-    AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+    if(lineIndex >= scrollAmount && lineIndex < scrollAmount + MAX_LIST_DISPLAY_COUNT)
+    {
+        displayLine = lineIndex - scrollAmount;
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+    }
+
+    if(needsWrap)
+    {
+        switch(ability)
+        {
+        case ABILITY_THICK_FAT:
+        case ABILITY_WATER_BUBBLE:
+        case ABILITY_HEATPROOF:
+        case ABILITY_PURIFYING_SALT:
+            StringCopy(gStringVar3, _("50% reduction"));
+            break;
+        case ABILITY_DRY_SKIN:
+            StringCopy(gStringVar3, _("Fire -> 1.25x"));
+            break;
+        default:
+            return;
+        }
+
+        if(lineIndex + 1 >= scrollAmount && lineIndex + 1 < scrollAmount + MAX_LIST_DISPLAY_COUNT)
+        {
+            displayLine = lineIndex + 1 - scrollAmount;
+            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, gStringVar3);
+        }
+    }
 }
 
 static void DisplayMonTypeMatchupAbilityEffects(u8 scrollAmount, const u8 color[3], u8 ySpacing)
@@ -2879,6 +2945,7 @@ static void DisplayMonTypeMatchupAbilityEffects(u8 scrollAmount, const u8 color[
         {
             ++effectLine;
             DisplayAbilityTypeMatchupEffect(ability, effectLine, scrollAmount, color, ySpacing);
+            effectLine += GetAbilityTypeMatchupEffectLineCount(ability) - 1;
         }
     }
 }

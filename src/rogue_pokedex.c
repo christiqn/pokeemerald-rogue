@@ -2577,7 +2577,11 @@ static u8 GetTypeDetailsLineCount(u8 type)
         for(category = 0; category < 3; ++category)
         {
             u8 count = GetTypeDetailsCategoryCount(type, section == 0, category);
-            lineCount += (count == 0) ? 1 : 1 + ((count - 1) / 3);
+
+            // Omit empty categories entirely. In particular, this prevents an
+            // empty x0 category from consuming a line when there are no immunities.
+            if(count != 0)
+                lineCount += 1 + ((count - 1) / 3);
         }
     }
 
@@ -2594,7 +2598,8 @@ static u16 GetTypeDetailsMaxScrollOffset(u8 type)
 
 static void DisplayMonTypeDetailsText()
 {
-    u8 category;
+    u8 section;
+    u8 detailCategory;
     u8 typeIndex;
     u8 lineIndex = 0;
     u8 displayLine;
@@ -2606,84 +2611,84 @@ static void DisplayMonTypeDetailsText()
     u8 const ySpacing = 16;
     u8 const color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
     const u8 *sectionText;
-    const u8 *categoryText;
+    const u8 *multiplierText;
 
     AddTitleText(sTitle_TypeDetails);
 
     FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
     DestroyMonTypeMatchupSprites();
 
-    // Keep the selected type name fixed at the top of the content window.
+    // The selected type stays fixed at the top while the matchup information scrolls below it.
     AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 2, 0, 0, color, TEXT_SKIP_DRAW, gTypeNames[selectedType]);
 
-    for(category = 0; category < 6; ++category)
+    for(section = 0; section < 2; ++section)
     {
-        bool8 isAttack = category < 3;
-        u8 detailCategory = category % 3;
+        sectionText = (section == 0) ? sText_AttackSection : sText_DefenseSection;
 
-        sectionText = NULL;
-        if(category == 0)
-            sectionText = sText_AttackSection;
-        else if(category == 3)
-            sectionText = sText_DefenseSection;
-
-        if(sectionText != NULL)
-        {
-            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
-            {
-                displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
-                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, sectionText);
-            }
-            ++lineIndex;
-        }
-
-        if(detailCategory == 0)
-            categoryText = isAttack ? sText_Effective : sText_WeakTo;
-        else if(detailCategory == 1)
-            categoryText = isAttack ? sText_NotVeryEffective : sText_Resists;
-        else
-            categoryText = isAttack ? sText_NoEffect : sText_ImmuneTo;
-
-        typeCount = GetTypeDetailsCategoryCount(selectedType, isAttack, detailCategory);
-
-        // Category label.
         if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
         {
             displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
-            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, categoryText);
-
-            if(typeCount == 0)
-                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 82, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, sText_SkillNone);
+            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, sectionText);
         }
         ++lineIndex;
 
-        if(typeCount == 0)
-            continue;
-
-        lineIconStart = 0;
-        while(lineIconStart < typeCount)
+        for(detailCategory = 0; detailCategory < 3; ++detailCategory)
         {
-            u8 iconsOnLine = min(typeCount - lineIconStart, 3);
+            typeCount = GetTypeDetailsCategoryCount(selectedType, section == 0, detailCategory);
 
-            if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
+            // Do not display an empty category. This is especially important for x0,
+            // where "None" should not take up a line at all.
+            if(typeCount == 0)
+                continue;
+
+            switch(detailCategory)
             {
-                displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
-
-                for(iconIndex = 0; iconIndex < iconsOnLine; ++iconIndex)
-                {
-                    typeIndex = GetTypeDetailsTypeAtIndex(selectedType, isAttack, detailCategory, lineIconStart + iconIndex);
-                    if(typeIndex != TYPE_MYSTERY && displaySprite < 18)
-                    {
-                        u8 iconX = 123 + 33 * iconIndex;
-                        u8 iconY = 24 + ySpacing * displayLine;
-                        sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
-                        ++displaySprite;
-                    }
-                }
+            case 0:
+                multiplierText = sText_X2;
+                break;
+            case 1:
+                multiplierText = sText_XHalf;
+                break;
+            default:
+                multiplierText = sText_X0;
+                break;
             }
 
-            lineIconStart += iconsOnLine;
-            ++lineIndex;
+            lineIconStart = 0;
+            while(lineIconStart < typeCount)
+            {
+                u8 iconsOnLine = min(typeCount - lineIconStart, 3);
+
+                if(lineIndex >= sPokedexMenu->listScrollAmount && lineIndex < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
+                {
+                    displayLine = lineIndex - sPokedexMenu->listScrollAmount + 1;
+
+                    // Match the Type Matchups layout: multiplier at the left,
+                    // first row starts farther right, wrapped rows are indented less.
+                    AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, multiplierText);
+
+                    for(iconIndex = 0; iconIndex < iconsOnLine; ++iconIndex)
+                    {
+                        typeIndex = GetTypeDetailsTypeAtIndex(selectedType, section == 0, detailCategory, lineIconStart + iconIndex);
+                        if(typeIndex != TYPE_MYSTERY && displaySprite < 18)
+                        {
+                            u8 iconX = 123 + 33 * iconIndex;
+                            u8 iconY = 24 + ySpacing * displayLine;
+
+                            // Continuation lines are indented by one icon position,
+                            // just like the Type Matchups page.
+                            if(lineIconStart != 0)
+                                iconX = 109 + 33 * iconIndex;
+
+                            sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
+                            ++displaySprite;
+                        }
+                    }
+                }
+
+                lineIconStart += iconsOnLine;
+                ++lineIndex;
+            }
         }
     }
 
@@ -2791,7 +2796,7 @@ static void DisplayMonTypeMatchupsText()
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
 
                             if(typeIndex == selectedType)
-                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 35 : 21) + 33 * iconIndex, ySpacing * displayLine + 8, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
+                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 19 : 5) + 33 * iconIndex, ySpacing * displayLine - 1, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
 
                             ++displaySprite;
                         }

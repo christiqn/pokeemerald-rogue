@@ -296,6 +296,12 @@ static const u8 sText_AbilityFireHalf[] = _(" : Fire -> 50% reduction");
 static const u8 sText_AbilityDrySkin[] = _(" : Water -> x0, Fire -> 1.25x");
 static const u8 sText_AbilityFluffy[] = _(" : Fire -> 2x");
 static const u8 sText_AbilityGhostHalf[] = _(" : Ghost -> 50% reduction");
+static const u8 sText_AbilityFireIceHalfStart[] = _(" : Fire/Ice ->");
+static const u8 sText_AbilityFireHalfStart[] = _(" : Fire ->");
+static const u8 sText_AbilityDrySkinStart[] = _(" : Water -> x0,");
+static const u8 sText_AbilityHalfReduction[] = _("50% reduction");
+static const u8 sText_AbilityDrySkinFire[] = _("Fire -> 1.25x");
+static const u8 sText_AbilityGhostHalfStart[] = _(" : Ghost ->");
 
 extern const u8 gText_DexNational[];
 extern const u8 gText_DexHoenn[];
@@ -2522,17 +2528,13 @@ static void UpdateTypeMatchupSelectionScroll()
     else if(selectedLine >= sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
         sPokedexMenu->listScrollAmount = min(maxScrollOffset, selectedLine - MAX_LIST_DISPLAY_COUNT + 1);
 
-    // When ability effects are present, automatically scroll to the bottom
-    // portion of the page as soon as the final matchup line is selected. This
-    // keeps the selected type visible while also revealing the effects below it.
+    // When the final matchup is selected and Ability Effects exist, move the
+    // window to the bottom-most possible position. The selected matchup is
+    // still kept visible because the scroll offset cannot pass its line.
     {
         u8 abilityLines = GetAbilityTypeMatchupLineCount();
         if(abilityLines != 0 && selectedLine == GetTypeMatchupLineCount() - 1)
-        {
-            u8 matchupLinesVisible = MAX_LIST_DISPLAY_COUNT - min(abilityLines, MAX_LIST_DISPLAY_COUNT - 1);
-            u16 desiredScroll = selectedLine > matchupLinesVisible ? selectedLine - matchupLinesVisible : 0;
-            sPokedexMenu->listScrollAmount = min(maxScrollOffset, desiredScroll);
-        }
+            sPokedexMenu->listScrollAmount = min(maxScrollOffset, (u16)selectedLine);
     }
 }
 
@@ -2865,17 +2867,20 @@ static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scroll
         StringAppend(gStringVar4, sText_AbilityGrass0);
         break;
     case ABILITY_THICK_FAT:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityFireIceHalfStart);
+        break;
     case ABILITY_WATER_BUBBLE:
         StringCopy(gStringVar4, gAbilityNames[ability]);
-        StringAppend(gStringVar4, _(" : Fire/Ice ->"));
+        StringAppend(gStringVar4, sText_AbilityFireHalfStart);
         break;
     case ABILITY_HEATPROOF:
         StringCopy(gStringVar4, gAbilityNames[ability]);
-        StringAppend(gStringVar4, _(" : Fire ->"));
+        StringAppend(gStringVar4, sText_AbilityFireHalfStart);
         break;
     case ABILITY_DRY_SKIN:
         StringCopy(gStringVar4, gAbilityNames[ability]);
-        StringAppend(gStringVar4, _(" : Water -> x0,"));
+        StringAppend(gStringVar4, sText_AbilityDrySkinStart);
         break;
     case ABILITY_FLUFFY:
         StringCopy(gStringVar4, gAbilityNames[ability]);
@@ -2883,7 +2888,7 @@ static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scroll
         break;
     case ABILITY_PURIFYING_SALT:
         StringCopy(gStringVar4, gAbilityNames[ability]);
-        StringAppend(gStringVar4, _(" : Ghost ->"));
+        StringAppend(gStringVar4, sText_AbilityGhostHalfStart);
         break;
     case ABILITY_EARTH_EATER:
         StringCopy(gStringVar4, gAbilityNames[ability]);
@@ -2907,10 +2912,10 @@ static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scroll
         case ABILITY_WATER_BUBBLE:
         case ABILITY_HEATPROOF:
         case ABILITY_PURIFYING_SALT:
-            StringCopy(gStringVar3, _("50% reduction"));
+            StringCopy(gStringVar3, sText_AbilityHalfReduction);
             break;
         case ABILITY_DRY_SKIN:
-            StringCopy(gStringVar3, _("Fire -> 1.25x"));
+            StringCopy(gStringVar3, sText_AbilityDrySkinFire);
             break;
         default:
             return;

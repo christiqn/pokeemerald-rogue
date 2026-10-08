@@ -2667,6 +2667,7 @@ static void GetTypeDetailsSelectionPosition(u8 type, u8 selectedIndex, u8 *line,
     u8 category;
     u8 i;
     u8 lineIndex = 0;
+    u8 currentIndex = 0;
 
     for(section = 0; section < 2; ++section)
     {

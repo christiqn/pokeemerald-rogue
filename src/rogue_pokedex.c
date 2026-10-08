@@ -2005,7 +2005,7 @@ static void DisplayMonMoveSetsText()
         else
             StringCopyN(gStringVar1, gAbilityNames[preset->ability], ABILITY_NAME_LENGTH);
         StringExpandPlaceholders(gStringVar4, sText_MoveSetAbility);
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 12 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
 
         // Item
         if(preset->heldItem == ITEM_NONE)
@@ -2013,12 +2013,12 @@ static void DisplayMonMoveSetsText()
         else
             StringCopyN(gStringVar1, ItemId_GetName(preset->heldItem), ITEM_NAME_LENGTH);
         StringExpandPlaceholders(gStringVar4, sText_MoveSetItem);
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 12 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
 
         // Nature
         StringCopy(gStringVar1, gNatureNamePointers[preset->nature]);
         StringExpandPlaceholders(gStringVar4, sText_MoveSetNature);
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 12 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
 
         // Moves
         for(i = 0; i < MAX_MON_MOVES; ++i)
@@ -2029,7 +2029,7 @@ static void DisplayMonMoveSetsText()
             {
                 StringCopy(gStringVar1, gMoveNames[moveId]);
                 StringExpandPlaceholders(gStringVar4, sText_MoveSetMove);
-                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 12 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
             }
         }
     }

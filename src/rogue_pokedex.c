@@ -287,7 +287,7 @@ static const u8 sText_XQuarter[] = _("x1/4");
 static const u8 sText_X0[] = _("x0");
 static const u8 sText_AbilityEffects[] = _("Ability Effects:");
 static const u8 sText_AbilityGround0[] = _(": Ground -> x0");
-static const u8 sText_AbilityElectric0[] = _(": Electric -> x0");
+static const u8 sText_AbilityElectric0[] = _(": Electric ->");
 static const u8 sText_AbilityWater0[] = _(": Water -> x0");
 static const u8 sText_AbilityFire0[] = _(": Fire -> x0");
 static const u8 sText_AbilityGrass0[] = _(": Grass -> x0");
@@ -2519,24 +2519,19 @@ static void UpdateTypeMatchupSelectionScroll()
     selectedLine = sPokedexMenu->typeMatchupSelectedIndex / 3;
     maxScrollOffset = GetMaxTypeMatchupScrollOffset();
 
-    // If the last matchup is selected, allow the user to keep scrolling down
-    // into the Ability Effects section without moving the type selection.
-    // Otherwise, keep the selected matchup visible as normal.
-    if(selectedLine < sPokedexMenu->listScrollAmount
-       && !(selectedLine == GetTypeMatchupLineCount() - 1
-            && sPokedexMenu->listScrollAmount <= maxScrollOffset))
+    // Keep the selected type visible during normal selection movement.
+    if(selectedLine < sPokedexMenu->listScrollAmount)
         sPokedexMenu->listScrollAmount = selectedLine;
     else if(selectedLine >= sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
         sPokedexMenu->listScrollAmount = min(maxScrollOffset, selectedLine - MAX_LIST_DISPLAY_COUNT + 1);
 
-    // When the final matchup is selected and Ability Effects exist, move the
-    // window to the bottom-most possible position. The selected matchup is
-    // still kept visible because the scroll offset cannot pass its line.
-    {
-        u8 abilityLines = GetAbilityTypeMatchupLineCount();
-        if(abilityLines != 0 && selectedLine == GetTypeMatchupLineCount() - 1)
-            sPokedexMenu->listScrollAmount = maxScrollOffset;
-    }
+    // If the final TYPE itself is selected, jump directly to the bottom of
+    // the complete list. This is based on the selected type index rather than
+    // its line number so it also works when the final row contains fewer than
+    // three types. The final row remains visible at the top of the bottom view.
+    if(GetAbilityTypeMatchupEffectCount() != 0
+       && sPokedexMenu->typeMatchupSelectedIndex == total - 1)
+        sPokedexMenu->listScrollAmount = maxScrollOffset;
 }
 
 static u8 GetTypeDetailsCategoryCount(u8 type, bool8 isAttack, u8 category)

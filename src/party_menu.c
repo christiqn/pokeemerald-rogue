@@ -2960,6 +2960,16 @@ static void SetPartyMonSelectionActions(struct Pokemon *mons, u8 slotId, u8 acti
         sPartyMenuInternal->numActions = sPartyMenuActionCounts[action];
         for (i = 0; i < sPartyMenuInternal->numActions; i++)
             sPartyMenuInternal->actions[i] = sPartyMenuActions[action][i];
+
+        // Forced switches / U-turn / Volt Switch use ACTIONS_SEND_OUT.
+        // Give that menu the same Pokedex option as a normal battle switch.
+        if(action == ACTIONS_SEND_OUT)
+        {
+            sPartyMenuInternal->numActions = sPartyMenuActionCounts[ACTIONS_SHIFT_POKEDEX];
+            for (i = 0; i < sPartyMenuInternal->numActions; i++)
+                sPartyMenuInternal->actions[i] = sPartyMenuActions[ACTIONS_SHIFT_POKEDEX][i];
+            sPartyMenuInternal->actions[0] = MENU_SEND_OUT;
+        }
     }
 }
 

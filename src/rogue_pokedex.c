@@ -2789,9 +2789,6 @@ static bool8 AbilityTypeMatchupEffectNeedsWrap(u16 ability)
     switch(ability)
     {
     case ABILITY_THICK_FAT:
-    case ABILITY_LIGHTNING_ROD:
-    case ABILITY_VOLT_ABSORB:
-    case ABILITY_MOTOR_DRIVE:
     case ABILITY_WATER_BUBBLE:
     case ABILITY_HEATPROOF:
     case ABILITY_DRY_SKIN:
@@ -2907,11 +2904,6 @@ static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scroll
     {
         switch(ability)
         {
-        case ABILITY_LIGHTNING_ROD:
-        case ABILITY_VOLT_ABSORB:
-        case ABILITY_MOTOR_DRIVE:
-            StringCopy(gStringVar3, sText_AbilityElectricImmune);
-            break;
         case ABILITY_THICK_FAT:
         case ABILITY_WATER_BUBBLE:
         case ABILITY_HEATPROOF:

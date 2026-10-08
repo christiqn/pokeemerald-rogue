@@ -69,6 +69,7 @@ enum
     PAGE_OVERVIEW,
     PAGE_MON_STATS,
     PAGE_MON_MOVES,
+    PAGE_MON_MOVESETS,
     PAGE_MON_EVOS,
     PAGE_MON_FORMS,
 
@@ -185,6 +186,13 @@ static const struct WindowTemplate sMonEntryWinTemplates[WIN_COUNT + 1] =
 #ifdef ROGUE_EXPANSION
 static const u8 sTitle_Stats[] = _("Stats");
 static const u8 sTitle_Moves[] = _("Moves");
+static const u8 sTitle_MoveSets[] = _("Suggested Sets");
+static const u8 sText_MoveSetCounter[] = _("Set {STR_VAR_1}/{STR_VAR_2}");
+static const u8 sText_MoveSetAbility[] = _("Ability: {STR_VAR_1}");
+static const u8 sText_MoveSetItem[] = _("Item: {STR_VAR_1}");
+static const u8 sText_MoveSetNature[] = _("Nature: {STR_VAR_1}");
+static const u8 sText_MoveSetMove[] = _(" -{STR_VAR_1}");
+static const u8 sText_MoveSetNoData[] = _("No recommendations for\nthis Pokémon.");
 static const u8 sTitle_Evolutions[] = _("Evolutions");
 static const u8 sTitle_Forms[] = _("Forms");
 static const u8 sTitle_Riding[] = _("Poké Ride");
@@ -235,6 +243,13 @@ static const u8 sText_RevisedInspect[] = _("{A_BUTTON} Inspect");
 #else
 static const u8 sTitle_Stats[] = _("STATS");
 static const u8 sTitle_Moves[] = _("MOVES");
+static const u8 sTitle_MoveSets[] = _("SUGGESTED SETS");
+static const u8 sText_MoveSetCounter[] = _("SET {STR_VAR_1}/{STR_VAR_2}");
+static const u8 sText_MoveSetAbility[] = _("ABILITY: {STR_VAR_1}");
+static const u8 sText_MoveSetItem[] = _("ITEM: {STR_VAR_1}");
+static const u8 sText_MoveSetNature[] = _("NATURE: {STR_VAR_1}");
+static const u8 sText_MoveSetMove[] = _(" -{STR_VAR_1}");
+static const u8 sText_MoveSetNoData[] = _("NO RECOMMENDATIONS FOR\nTHIS POKéMON.");
 static const u8 sTitle_Evolutions[] = _("EVOLUTIONS");
 static const u8 sTitle_Forms[] = _("FORMS");
 static const u8 sTitle_Riding[] = _("POKé RIDE");
@@ -307,6 +322,7 @@ static const u8 sText_AbilityGhostHalfStart[] = _(": Ghost ->");
 extern const u8 gText_DexNational[];
 extern const u8 gText_DexHoenn[];
 extern const u8 gText_PokedexDiploma[];
+extern const u8 *const gNatureNamePointers[];
 
 static void CB2_Rogue_ShowPokedex(void);
 static void MainCB2(void);
@@ -325,6 +341,7 @@ static void DisplayTitleDexVariantText(void);
 static void DisplayMonEntryText(void);
 static void DisplayMonStatsText(void);
 static void DisplayMonMovesText(void);
+static void DisplayMonMoveSetsText(void);
 static void DisplayMonEvosText(void);
 static void DisplayMonFormsText(void);
 static void DisplayMonRideStatsText(void);
@@ -374,6 +391,7 @@ static void MonStats_HandleInput(u8);
 
 // Mon moves
 static void MonMoves_HandleInput(u8);
+static void MonMoveSets_HandleInput(u8);
 
 // Mon evos
 static void MonEvos_OpenMoveQuery();
@@ -841,6 +859,20 @@ static void InitPageResources(u8 fromPage, u8 toPage)
         }
         break;
 
+    case PAGE_MON_MOVESETS:
+        {
+            LZDecompressWram(sPageListsTilemap, sTilemapBufferPtr);
+            CopyBgTilemapBufferToVram(1);
+
+            InitMonEntryWindows();
+            // Text printed below
+
+            LoadMonIconPalettes();
+
+            MonInfo_CreateSprites(FALSE);
+        }
+        break;
+
     case PAGE_MON_EVOS:
         {
             LZDecompressWram(sPageFormsTilemap, sTilemapBufferPtr);
@@ -939,6 +971,7 @@ static void DestroyPageResources(u8 fromPage, u8 toPage)
         break;
 
     case PAGE_MON_STATS:
+    case PAGE_MON_MOVESETS:
     case PAGE_MON_EVOS:
     case PAGE_MON_FORMS:
     case PAGE_MON_RIDE_STATS:
@@ -1047,6 +1080,11 @@ static void Task_PageFadeIn(u8 taskId)
         DisplayMonMovesText();
         break;
 
+    case PAGE_MON_MOVESETS:
+        DisplayMonEntryText();
+        DisplayMonMoveSetsText();
+        break;
+
     case PAGE_MON_EVOS:
         DisplayMonEntryText();
         DisplayMonEvosText();
@@ -1116,6 +1154,10 @@ static void Task_PageWaitForKeyPress(u8 taskId)
 
     case PAGE_MON_MOVES:
         MonMoves_HandleInput(taskId);
+        break;
+
+    case PAGE_MON_MOVESETS:
+        MonMoveSets_HandleInput(taskId);
         break;
 
     case PAGE_MON_EVOS:
@@ -1931,6 +1973,71 @@ static void DisplayMonMovesText()
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
+static void DisplayMonMoveSetsText()
+{
+    u8 i;
+    u8 line = 0;
+    u8 color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
+    u16 species = sPokedexMenu->viewBaseSpecies;
+    struct RoguePokemonProfile const* pokemonProfile = Rogue_GetPokemonProfile(species);
+
+    AddTitleText(sTitle_MoveSets);
+
+    FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
+
+    if(pokemonProfile->competitiveSetCount == 0)
+    {
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 0, 0, 0, color, TEXT_SKIP_DRAW, sText_MoveSetNoData);
+    }
+    else
+    {
+        struct RoguePokemonCompetitiveSet const* preset = &pokemonProfile->competitiveSets[sPokedexMenu->listScrollAmount];
+
+        ConvertUIntToDecimalStringN(gStringVar1, sPokedexMenu->listScrollAmount + 1, STR_CONV_MODE_LEFT_ALIGN, 2);
+        ConvertUIntToDecimalStringN(gStringVar2, pokemonProfile->competitiveSetCount, STR_CONV_MODE_LEFT_ALIGN, 3);
+        StringExpandPlaceholders(gStringVar4, sText_MoveSetCounter);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 0, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+        line = 1;
+
+        // Ability
+        if(preset->ability == ABILITY_NONE)
+            StringCopy(gStringVar1, gText_None);
+        else
+            StringCopyN(gStringVar1, gAbilityNames[preset->ability], ABILITY_NAME_LENGTH);
+        StringExpandPlaceholders(gStringVar4, sText_MoveSetAbility);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+
+        // Item
+        if(preset->heldItem == ITEM_NONE)
+            StringCopy(gStringVar1, gText_None);
+        else
+            StringCopyN(gStringVar1, ItemId_GetName(preset->heldItem), ITEM_NAME_LENGTH);
+        StringExpandPlaceholders(gStringVar4, sText_MoveSetItem);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+
+        // Nature
+        StringCopy(gStringVar1, gNatureNamePointers[preset->nature]);
+        StringExpandPlaceholders(gStringVar4, sText_MoveSetNature);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+
+        // Moves
+        for(i = 0; i < MAX_MON_MOVES; ++i)
+        {
+            u16 moveId = preset->moves[i];
+
+            if(moveId != MOVE_NONE)
+            {
+                StringCopy(gStringVar1, gMoveNames[moveId]);
+                StringExpandPlaceholders(gStringVar4, sText_MoveSetMove);
+                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+            }
+        }
+    }
+
+    PutWindowTilemap(WIN_MON_PAGE_CONTENT);
+    CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
+}
+
 static u16 GetMaxEvoScrollOffset()
 {
     u8 i;
@@ -2015,8 +2122,6 @@ static u16 GetActiveFormSpecies()
 #endif
 
 extern const u8 gTypeNames[NUMBER_OF_MON_TYPES][TYPE_NAME_LENGTH + 1];
-extern const u8 *const gNatureNamePointers[];
-
 static void DisplayMonEvosText()
 {
     u8 i;
@@ -2882,7 +2987,7 @@ static void DisplayMonTypeDetailsText()
            && selectedLine < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
         {
             u8 selectedDisplayLine = selectedLine - sPokedexMenu->listScrollAmount + 1;
-            u8 arrowX = (selectedContinuationLine ? 5 : 19) + 33 * selectedIconIndex;
+            u8 arrowX = (selectedContinuationLine ? 6 : 20) + 33 * selectedIconIndex;
             u8 arrowY = ySpacing * selectedDisplayLine;
 
             AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, arrowX, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
@@ -3220,7 +3325,7 @@ static void DisplayMonTypeMatchupsText()
                                 // Keep the selected arrow at the current vertical position,
                                 // but move it into the window on the first row so it is not clipped.
                                 u8 arrowY = (displayLine == 0) ? 0 : ySpacing * displayLine;
-                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 19 : 5) + 33 * iconIndex, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
+                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 20 : 6) + 33 * iconIndex, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
                             }
 
                             ++displaySprite;
@@ -4714,8 +4819,10 @@ static u8 NavigateNextMonPage(u8 startPage, u8 dir)
             else
                 ++currentPage;
 
-            // PAGE_MON_TYPE_DETAILS is a subpage of Type Matchups, not a normal Pokédex page.
-            if(currentPage == PAGE_MON_TYPE_DETAILS)
+            // PAGE_MON_MOVESETS and PAGE_MON_TYPE_DETAILS are subpages, not normal Pokédex pages.
+            if(currentPage == PAGE_MON_MOVESETS)
+                currentPage = PAGE_MON_EVOS;
+            else if(currentPage == PAGE_MON_TYPE_DETAILS)
                 currentPage = PAGE_MON_FIRST;
         }
         else // if(dir == -1)
@@ -4725,8 +4832,10 @@ static u8 NavigateNextMonPage(u8 startPage, u8 dir)
             else
                 --currentPage;
 
-            // PAGE_MON_TYPE_DETAILS is a subpage of Type Matchups, not a normal Pokédex page.
-            if(currentPage == PAGE_MON_TYPE_DETAILS)
+            // PAGE_MON_MOVESETS and PAGE_MON_TYPE_DETAILS are subpages, not normal Pokédex pages.
+            if(currentPage == PAGE_MON_MOVESETS)
+                currentPage = PAGE_MON_MOVES;
+            else if(currentPage == PAGE_MON_TYPE_DETAILS)
                 currentPage = PAGE_MON_LAST - 1;
         }
 
@@ -4822,9 +4931,63 @@ static void MonStats_HandleInput(u8 taskId)
 }
 
 
+static void MonMoveSets_HandleInput(u8 taskId)
+{
+    struct RoguePokemonProfile const* pokemonProfile = Rogue_GetPokemonProfile(sPokedexMenu->viewBaseSpecies);
+    u16 total = pokemonProfile->competitiveSetCount;
+
+    if(JOY_NEW(B_BUTTON))
+    {
+        sPokedexMenu->desiredPage = PAGE_MON_MOVES;
+        gTasks[taskId].func = Task_SwapToPage;
+        PlaySE(SE_PIN);
+        return;
+    }
+
+    if(MonInfo_HandleInput(taskId))
+        return;
+
+    if(total == 0)
+    {
+        if(JOY_NEW(DPAD_UP) || JOY_NEW(DPAD_DOWN) || JOY_NEW(A_BUTTON))
+            PlaySE(SE_FAILURE);
+        return;
+    }
+
+    if(JOY_REPEAT(DPAD_UP))
+    {
+        if(sPokedexMenu->listScrollAmount == 0)
+            sPokedexMenu->listScrollAmount = total - 1;
+        else
+            --sPokedexMenu->listScrollAmount;
+
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonMoveSetsText();
+    }
+    else if(JOY_REPEAT(DPAD_DOWN))
+    {
+        if(sPokedexMenu->listScrollAmount >= total - 1)
+            sPokedexMenu->listScrollAmount = 0;
+        else
+            ++sPokedexMenu->listScrollAmount;
+
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonMoveSetsText();
+    }
+}
+
 static void MonMoves_HandleInput(u8 taskId)
 {
     u16 maxScrollOffset;
+
+    if(JOY_NEW(A_BUTTON))
+    {
+        sPokedexMenu->listScrollAmount = 0;
+        sPokedexMenu->desiredPage = PAGE_MON_MOVESETS;
+        gTasks[taskId].func = Task_SwapToPage;
+        PlaySE(SE_PIN);
+        return;
+    }
 
     if(MonInfo_HandleInput(taskId))
         return;

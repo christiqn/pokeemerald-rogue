@@ -2664,10 +2664,10 @@ static u8 GetTypeDetailsSelectableIndexForType(u8 type, u8 selectedType)
 static void GetTypeDetailsSelectionPosition(u8 type, u8 selectedIndex, u8 *line, u8 *iconIndex, bool8 *continuationLine)
 {
     u8 section;
+    u8 currentIndex = 0;
     u8 category;
     u8 i;
     u8 lineIndex = 0;
-    u8 currentIndex = 0;
 
     for(section = 0; section < 2; ++section)
     {
@@ -5184,7 +5184,7 @@ static void MonTypeMatchups_HandleInput(u8 taskId)
     if(JOY_NEW(A_BUTTON))
     {
         sPokedexMenu->typeDetailsType = GetTypeMatchupTypeAtIndex(sPokedexMenu->typeMatchupSelectedIndex);
-        sPokedexMenu->typeDetailsSelectedIndex = GetTypeDetailsSelectableIndexForType(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsType);
+        sPokedexMenu->typeDetailsSelectedIndex = 0;
         sPokedexMenu->listScrollAmount = 0;
         sPokedexMenu->desiredPage = PAGE_MON_TYPE_DETAILS;
         gTasks[taskId].func = Task_SwapToPage;
@@ -5275,7 +5275,7 @@ static void MonTypeDetails_HandleInput(u8 taskId)
         if(selectedType != TYPE_MYSTERY)
         {
             sPokedexMenu->typeDetailsType = selectedType;
-            sPokedexMenu->typeDetailsSelectedIndex = GetTypeDetailsSelectableIndexForType(selectedType, selectedType);
+            sPokedexMenu->typeDetailsSelectedIndex = 0;
             sPokedexMenu->listScrollAmount = 0;
             sPokedexMenu->desiredPage = PAGE_MON_TYPE_DETAILS;
             gTasks[taskId].func = Task_SwapToPage;

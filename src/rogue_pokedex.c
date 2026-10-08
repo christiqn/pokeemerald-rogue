@@ -1987,14 +1987,14 @@ static void DisplayMonMoveSetsText()
 
     if(pokemonProfile->competitiveSetCount == 0)
     {
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 0, 0, 0, color, TEXT_SKIP_DRAW, sText_MoveSetNoData);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 0, 0, 0, color, TEXT_SKIP_DRAW, sText_MoveSetNoData);
     }
     else
     {
         struct RoguePokemonCompetitiveSet const* preset = &pokemonProfile->competitiveSets[sPokedexMenu->listScrollAmount];
 
         ConvertUIntToDecimalStringN(gStringVar1, sPokedexMenu->listScrollAmount + 1, STR_CONV_MODE_LEFT_ALIGN, 2);
-        ConvertUIntToDecimalStringN(gStringVar2, pokemonProfile->competitiveSetCount, STR_CONV_MODE_LEFT_ALIGN, 2);
+        ConvertUIntToDecimalStringN(gStringVar2, pokemonProfile->competitiveSetCount, STR_CONV_MODE_LEFT_ALIGN, 3);
         StringExpandPlaceholders(gStringVar4, sText_MoveSetCounter);
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 0, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
         line = 1;

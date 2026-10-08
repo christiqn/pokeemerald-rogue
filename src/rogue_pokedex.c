@@ -322,6 +322,7 @@ static const u8 sText_AbilityGhostHalfStart[] = _(": Ghost ->");
 extern const u8 gText_DexNational[];
 extern const u8 gText_DexHoenn[];
 extern const u8 gText_PokedexDiploma[];
+extern const u8 *const gNatureNamePointers[];
 
 static void CB2_Rogue_ShowPokedex(void);
 static void MainCB2(void);
@@ -2121,8 +2122,6 @@ static u16 GetActiveFormSpecies()
 #endif
 
 extern const u8 gTypeNames[NUMBER_OF_MON_TYPES][TYPE_NAME_LENGTH + 1];
-extern const u8 *const gNatureNamePointers[];
-
 static void DisplayMonEvosText()
 {
     u8 i;

@@ -2987,7 +2987,7 @@ static void DisplayMonTypeDetailsText()
            && selectedLine < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
         {
             u8 selectedDisplayLine = selectedLine - sPokedexMenu->listScrollAmount + 1;
-            u8 arrowX = (selectedContinuationLine ? 5 : 19) + 33 * selectedIconIndex;
+            u8 arrowX = (selectedContinuationLine ? 6 : 20) + 33 * selectedIconIndex;
             u8 arrowY = ySpacing * selectedDisplayLine;
 
             AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, arrowX, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
@@ -3325,7 +3325,7 @@ static void DisplayMonTypeMatchupsText()
                                 // Keep the selected arrow at the current vertical position,
                                 // but move it into the window on the first row so it is not clipped.
                                 u8 arrowY = (displayLine == 0) ? 0 : ySpacing * displayLine;
-                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 19 : 5) + 33 * iconIndex, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
+                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 20 : 6) + 33 * iconIndex, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
                             }
 
                             ++displaySprite;
@@ -4982,19 +4982,10 @@ static void MonMoves_HandleInput(u8 taskId)
 
     if(JOY_NEW(A_BUTTON))
     {
-        struct RoguePokemonProfile const* pokemonProfile = Rogue_GetPokemonProfile(sPokedexMenu->viewBaseSpecies);
-
-        if(pokemonProfile->competitiveSetCount == 0)
-        {
-            PlaySE(SE_FAILURE);
-        }
-        else
-        {
-            sPokedexMenu->listScrollAmount = 0;
-            sPokedexMenu->desiredPage = PAGE_MON_MOVESETS;
-            gTasks[taskId].func = Task_SwapToPage;
-            PlaySE(SE_PIN);
-        }
+        sPokedexMenu->listScrollAmount = 0;
+        sPokedexMenu->desiredPage = PAGE_MON_MOVESETS;
+        gTasks[taskId].func = Task_SwapToPage;
+        PlaySE(SE_PIN);
         return;
     }
 

@@ -284,7 +284,25 @@ static const u8 sText_X4[] = _("x4");
 static const u8 sText_X2[] = _("x2");
 static const u8 sText_XHalf[] = _("x1/2");
 static const u8 sText_XQuarter[] = _("x1/4");
-static const u8 sText_X0[] = _("0x");
+static const u8 sText_X0[] = _("x0");
+static const u8 sText_AbilityEffects[] = _("Ability Effects:");
+static const u8 sText_AbilityGround0[] = _(": Ground -> x0");
+static const u8 sText_AbilityElectric0[] = _(": Electric -> x0");
+static const u8 sText_AbilityWater0[] = _(": Water -> x0");
+static const u8 sText_AbilityFire0[] = _(": Fire -> x0");
+static const u8 sText_AbilityGrass0[] = _(": Grass -> x0");
+static const u8 sText_AbilityFireIceHalf[] = _(": Fire/Ice -> 50% reduction");
+static const u8 sText_AbilityFireHalf[] = _(": Fire -> 50% reduction");
+static const u8 sText_AbilityDrySkin[] = _(": Water -> x0, Fire -> 1.25x");
+static const u8 sText_AbilityFluffy[] = _(": Fire -> 2x");
+static const u8 sText_AbilityGhostHalf[] = _(": Ghost -> 50% reduction");
+static const u8 sText_AbilityFireIceHalfStart[] = _(": Fire/Ice ->");
+static const u8 sText_AbilityFireHalfStart[] = _(": Fire ->");
+static const u8 sText_AbilityDrySkinStart[] = _(": Water -> x0,");
+static const u8 sText_AbilityHalfReduction[] = _("50% reduction");
+static const u8 sText_AbilityElectricImmune[] = _("x0");
+static const u8 sText_AbilityDrySkinFire[] = _("Fire -> 1.25x");
+static const u8 sText_AbilityGhostHalfStart[] = _(": Ghost ->");
 
 extern const u8 gText_DexNational[];
 extern const u8 gText_DexHoenn[];
@@ -292,6 +310,10 @@ extern const u8 gText_PokedexDiploma[];
 
 static void CB2_Rogue_ShowPokedex(void);
 static void MainCB2(void);
+static bool8 IsAbilityTypeMatchupEffect(u16 ability);
+static u8 GetAbilityTypeMatchupEffectCount(void);
+static u8 GetAbilityTypeMatchupLineCount(void);
+static void DisplayMonTypeMatchupAbilityEffects(u8 scrollAmount, const u8 color[3], u8 ySpacing);
 static void Task_SetupPage(u8);
 static void Task_SwapToPage(u8);
 static void Task_PageFadeIn(u8);
@@ -399,6 +421,7 @@ struct PokedexMenu
     u16 viewBaseSpecies;
     u16 listScrollAmount;
     u8 typeMatchupSelectedIndex;
+    u8 typeDetailsSelectedIndex;
     u8 typeDetailsType;
     u8 partySlot;
     u8 isInspectModeActive : 1;
@@ -2407,7 +2430,7 @@ static u8 GetTypeMatchupLineCount()
 
 static u16 GetMaxTypeMatchupScrollOffset()
 {
-    u16 lineCount = GetTypeMatchupLineCount();
+    u16 lineCount = GetTypeMatchupLineCount() + GetAbilityTypeMatchupLineCount();
     return lineCount - min(lineCount, MAX_LIST_DISPLAY_COUNT);
 }
 
@@ -2497,10 +2520,19 @@ static void UpdateTypeMatchupSelectionScroll()
     selectedLine = sPokedexMenu->typeMatchupSelectedIndex / 3;
     maxScrollOffset = GetMaxTypeMatchupScrollOffset();
 
+    // Keep the selected type visible during normal selection movement.
     if(selectedLine < sPokedexMenu->listScrollAmount)
         sPokedexMenu->listScrollAmount = selectedLine;
     else if(selectedLine >= sPokedexMenu->listScrollAmount + MAX_LIST_DISPLAY_COUNT)
         sPokedexMenu->listScrollAmount = min(maxScrollOffset, selectedLine - MAX_LIST_DISPLAY_COUNT + 1);
+
+    // If the final TYPE itself is selected, jump directly to the bottom of
+    // the complete list. This is based on the selected type index rather than
+    // its line number so it also works when the final row contains fewer than
+    // three types. The final row remains visible at the top of the bottom view.
+    if(GetAbilityTypeMatchupEffectCount() != 0
+       && sPokedexMenu->typeMatchupSelectedIndex == total - 1)
+        sPokedexMenu->listScrollAmount = maxScrollOffset;
 }
 
 static u8 GetTypeDetailsCategoryCount(u8 type, bool8 isAttack, u8 category)
@@ -2564,6 +2596,146 @@ static u8 GetTypeDetailsTypeAtIndex(u8 type, bool8 isAttack, u8 category, u8 ind
     return TYPE_MYSTERY;
 }
 
+static u8 GetTypeDetailsSelectableCount(u8 type)
+{
+    u8 section;
+    u8 category;
+    u8 count = 0;
+
+    for(section = 0; section < 2; ++section)
+    {
+        for(category = 0; category < 3; ++category)
+            count += GetTypeDetailsCategoryCount(type, section == 0, category);
+    }
+
+    return count;
+}
+
+static u8 GetTypeDetailsSelectableTypeAtIndex(u8 type, u8 index)
+{
+    u8 section;
+    u8 category;
+    u8 i;
+    u8 matchIndex = 0;
+
+    for(section = 0; section < 2; ++section)
+    {
+        for(category = 0; category < 3; ++category)
+        {
+            u8 count = GetTypeDetailsCategoryCount(type, section == 0, category);
+
+            for(i = 0; i < count; ++i)
+            {
+                if(matchIndex == index)
+                    return GetTypeDetailsTypeAtIndex(type, section == 0, category, i);
+                ++matchIndex;
+            }
+        }
+    }
+
+    return TYPE_MYSTERY;
+}
+
+static u8 GetTypeDetailsSelectableIndexForType(u8 type, u8 selectedType)
+{
+    u8 section;
+    u8 category;
+    u8 i;
+    u8 matchIndex = 0;
+
+    for(section = 0; section < 2; ++section)
+    {
+        for(category = 0; category < 3; ++category)
+        {
+            u8 count = GetTypeDetailsCategoryCount(type, section == 0, category);
+
+            for(i = 0; i < count; ++i)
+            {
+                if(GetTypeDetailsTypeAtIndex(type, section == 0, category, i) == selectedType)
+                    return matchIndex;
+                ++matchIndex;
+            }
+        }
+    }
+
+    return 0;
+}
+
+static void GetTypeDetailsSelectionPosition(u8 type, u8 selectedIndex, u8 *line, u8 *iconIndex, bool8 *continuationLine)
+{
+    u8 section;
+    u8 currentIndex = 0;
+    u8 category;
+    u8 i;
+    u8 lineIndex = 0;
+
+    for(section = 0; section < 2; ++section)
+    {
+        ++lineIndex; // Section header.
+
+        for(category = 0; category < 3; ++category)
+        {
+            u8 count = GetTypeDetailsCategoryCount(type, section == 0, category);
+            u8 row;
+
+            if(count == 0)
+                continue;
+
+            for(row = 0; row < (count + 2) / 3; ++row)
+            {
+                u8 rowCount = min(count - row * 3, 3);
+
+                for(i = 0; i < rowCount; ++i)
+                {
+                    if(currentIndex == selectedIndex)
+                    {
+                        *line = lineIndex;
+                        *iconIndex = i;
+                        *continuationLine = row != 0;
+                        return;
+                    }
+                    ++currentIndex;
+                }
+
+                ++lineIndex;
+            }
+        }
+    }
+
+    *line = 0;
+    *iconIndex = 0;
+    *continuationLine = FALSE;
+}
+
+static void UpdateTypeDetailsSelectionScroll()
+{
+    u8 total = GetTypeDetailsSelectableCount(sPokedexMenu->typeDetailsType);
+    u8 selectedLine;
+    u8 iconIndex;
+    bool8 continuationLine;
+    u16 maxScrollOffset = GetTypeDetailsMaxScrollOffset(sPokedexMenu->typeDetailsType);
+    u8 visibleLines = MAX_LIST_DISPLAY_COUNT - 2;
+
+    if(total == 0)
+    {
+        sPokedexMenu->typeDetailsSelectedIndex = 0;
+        sPokedexMenu->listScrollAmount = 0;
+        return;
+    }
+
+    if(sPokedexMenu->typeDetailsSelectedIndex >= total)
+        sPokedexMenu->typeDetailsSelectedIndex = total - 1;
+
+    GetTypeDetailsSelectionPosition(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsSelectedIndex, &selectedLine, &iconIndex, &continuationLine);
+    (void)iconIndex;
+    (void)continuationLine;
+
+    if(selectedLine < sPokedexMenu->listScrollAmount)
+        sPokedexMenu->listScrollAmount = selectedLine;
+    else if(selectedLine >= sPokedexMenu->listScrollAmount + visibleLines)
+        sPokedexMenu->listScrollAmount = min(maxScrollOffset, selectedLine - visibleLines + 1);
+}
+
 static u8 GetTypeDetailsLineCount(u8 type)
 {
     u8 section;
@@ -2607,8 +2779,11 @@ static void DisplayMonTypeDetailsText()
     u8 typeCount;
     u8 iconIndex;
     u8 lineIconStart;
+    u8 currentIndex = 0;
     u8 selectedType = sPokedexMenu->typeDetailsType;
     u8 const ySpacing = 16;
+
+    UpdateTypeDetailsSelectionScroll();
     u8 const color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
     const u8 *sectionText;
     const u8 *multiplierText;
@@ -2682,19 +2857,263 @@ static void DisplayMonTypeDetailsText()
                                 iconX = 109 + 33 * iconIndex;
 
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
+
                             ++displaySprite;
                         }
                     }
                 }
-
                 lineIconStart += iconsOnLine;
                 ++lineIndex;
             }
         }
     }
 
+    // Draw the selector separately from the icon loop so exactly one arrow is
+    // ever rendered, regardless of duplicate type icons on this page.
+    {
+        u8 selectedLine;
+        u8 selectedIconIndex;
+        bool8 selectedContinuationLine;
+
+        GetTypeDetailsSelectionPosition(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsSelectedIndex,
+            &selectedLine, &selectedIconIndex, &selectedContinuationLine);
+
+        if(selectedLine >= sPokedexMenu->listScrollAmount
+           && selectedLine < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
+        {
+            u8 selectedDisplayLine = selectedLine - sPokedexMenu->listScrollAmount + 1;
+            u8 arrowX = (selectedContinuationLine ? 5 : 19) + 33 * selectedIconIndex;
+            u8 arrowY = ySpacing * selectedDisplayLine;
+
+            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, arrowX, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
+        }
+    }
+
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
+}
+
+static bool8 AbilityWasAlreadyChecked(u16 ability, u8 slot)
+{
+    u8 i;
+
+    for(i = 0; i < slot; ++i)
+    {
+        if(GetAbilityBySpecies(sPokedexMenu->viewBaseSpecies, i, sPokedexMenu->viewOtId) == ability)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static bool8 IsAbilityTypeMatchupEffect(u16 ability)
+{
+    switch(ability)
+    {
+    case ABILITY_LEVITATE:
+    case ABILITY_EELEVATE:
+    case ABILITY_VOLT_ABSORB:
+    case ABILITY_WATER_ABSORB:
+    case ABILITY_FLASH_FIRE:
+    case ABILITY_LIGHTNING_ROD:
+    case ABILITY_MOTOR_DRIVE:
+    case ABILITY_THICK_FAT:
+    case ABILITY_HEATPROOF:
+    case ABILITY_DRY_SKIN:
+    case ABILITY_STORM_DRAIN:
+    case ABILITY_SAP_SIPPER:
+    case ABILITY_WATER_BUBBLE:
+    case ABILITY_FLUFFY:
+    case ABILITY_PURIFYING_SALT:
+    case ABILITY_WELL_BAKED_BODY:
+    case ABILITY_EARTH_EATER:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static u8 GetAbilityTypeMatchupEffectCount()
+{
+    u8 i;
+    u8 count = 0;
+
+    for(i = 0; i < NUM_ABILITY_SLOTS; ++i)
+    {
+        u16 ability = GetAbilityBySpecies(sPokedexMenu->viewBaseSpecies, i, sPokedexMenu->viewOtId);
+
+        if(ability != ABILITY_NONE && !AbilityWasAlreadyChecked(ability, i) && IsAbilityTypeMatchupEffect(ability))
+            ++count;
+    }
+
+    return count;
+}
+
+static bool8 AbilityTypeMatchupEffectNeedsWrap(u16 ability)
+{
+    switch(ability)
+    {
+    case ABILITY_THICK_FAT:
+    case ABILITY_WATER_BUBBLE:
+    case ABILITY_HEATPROOF:
+    case ABILITY_DRY_SKIN:
+    case ABILITY_PURIFYING_SALT:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static u8 GetAbilityTypeMatchupEffectLineCount(u16 ability)
+{
+    return AbilityTypeMatchupEffectNeedsWrap(ability) ? 2 : 1;
+}
+
+static u8 GetAbilityTypeMatchupLineCount()
+{
+    u8 i;
+    u8 count = GetAbilityTypeMatchupEffectCount();
+    u8 lineCount = count == 0 ? 0 : 1; // Heading.
+
+    if(count == 0)
+        return 0;
+
+    for(i = 0; i < NUM_ABILITY_SLOTS; ++i)
+    {
+        u16 ability = GetAbilityBySpecies(sPokedexMenu->viewBaseSpecies, i, sPokedexMenu->viewOtId);
+
+        if(ability != ABILITY_NONE && !AbilityWasAlreadyChecked(ability, i) && IsAbilityTypeMatchupEffect(ability))
+            lineCount += GetAbilityTypeMatchupEffectLineCount(ability);
+    }
+
+    return lineCount;
+}
+
+static void DisplayAbilityTypeMatchupEffect(u16 ability, u8 lineIndex, u8 scrollAmount, const u8 color[3], u8 ySpacing)
+{
+    u8 displayLine;
+    bool8 needsWrap = AbilityTypeMatchupEffectNeedsWrap(ability);
+
+    // A wrapped effect occupies two lines. Only skip the entire effect when
+    // both of its lines are above the visible area.
+    if(lineIndex + GetAbilityTypeMatchupEffectLineCount(ability) <= scrollAmount
+       || lineIndex >= scrollAmount + MAX_LIST_DISPLAY_COUNT)
+        return;
+
+    switch(ability)
+    {
+    case ABILITY_LEVITATE:
+    case ABILITY_EELEVATE:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityGround0);
+        break;
+    case ABILITY_VOLT_ABSORB:
+    case ABILITY_MOTOR_DRIVE:
+    case ABILITY_LIGHTNING_ROD:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityElectric0);
+        break;
+    case ABILITY_WATER_ABSORB:
+    case ABILITY_STORM_DRAIN:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityWater0);
+        break;
+    case ABILITY_FLASH_FIRE:
+    case ABILITY_WELL_BAKED_BODY:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityFire0);
+        break;
+    case ABILITY_SAP_SIPPER:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityGrass0);
+        break;
+    case ABILITY_THICK_FAT:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityFireIceHalfStart);
+        break;
+    case ABILITY_WATER_BUBBLE:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityFireHalfStart);
+        break;
+    case ABILITY_HEATPROOF:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityFireHalfStart);
+        break;
+    case ABILITY_DRY_SKIN:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityDrySkinStart);
+        break;
+    case ABILITY_FLUFFY:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityFluffy);
+        break;
+    case ABILITY_PURIFYING_SALT:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityGhostHalfStart);
+        break;
+    case ABILITY_EARTH_EATER:
+        StringCopy(gStringVar4, gAbilityNames[ability]);
+        StringAppend(gStringVar4, sText_AbilityGround0);
+        break;
+    default:
+        return;
+    }
+
+    if(lineIndex >= scrollAmount && lineIndex < scrollAmount + MAX_LIST_DISPLAY_COUNT)
+    {
+        displayLine = lineIndex - scrollAmount;
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+    }
+
+    if(needsWrap)
+    {
+        switch(ability)
+        {
+        case ABILITY_THICK_FAT:
+        case ABILITY_WATER_BUBBLE:
+        case ABILITY_HEATPROOF:
+        case ABILITY_PURIFYING_SALT:
+            StringCopy(gStringVar3, sText_AbilityHalfReduction);
+            break;
+        case ABILITY_DRY_SKIN:
+            StringCopy(gStringVar3, sText_AbilityDrySkinFire);
+            break;
+        default:
+            return;
+        }
+
+        if(lineIndex + 1 >= scrollAmount && lineIndex + 1 < scrollAmount + MAX_LIST_DISPLAY_COUNT)
+        {
+            displayLine = lineIndex + 1 - scrollAmount;
+            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, gStringVar3);
+        }
+    }
+}
+
+static void DisplayMonTypeMatchupAbilityEffects(u8 scrollAmount, const u8 color[3], u8 ySpacing)
+{
+    u8 i;
+    u8 effectLine = GetTypeMatchupLineCount();
+    if(GetAbilityTypeMatchupEffectCount() == 0)
+        return;
+
+    if(effectLine >= scrollAmount && effectLine < scrollAmount + MAX_LIST_DISPLAY_COUNT)
+    {
+        u8 displayLine = effectLine - scrollAmount;
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayLine + 2, 0, 0, color, TEXT_SKIP_DRAW, sText_AbilityEffects);
+    }
+
+    for(i = 0; i < NUM_ABILITY_SLOTS; ++i)
+    {
+        u16 ability = GetAbilityBySpecies(sPokedexMenu->viewBaseSpecies, i, sPokedexMenu->viewOtId);
+
+        if(ability != ABILITY_NONE && !AbilityWasAlreadyChecked(ability, i) && IsAbilityTypeMatchupEffect(ability))
+        {
+            ++effectLine;
+            DisplayAbilityTypeMatchupEffect(ability, effectLine, scrollAmount, color, ySpacing);
+            effectLine += GetAbilityTypeMatchupEffectLineCount(ability) - 1;
+        }
+    }
 }
 
 static void DisplayMonTypeMatchupsText()
@@ -2800,7 +3219,7 @@ static void DisplayMonTypeMatchupsText()
                             {
                                 // Keep the selected arrow at the current vertical position,
                                 // but move it into the window on the first row so it is not clipped.
-                                u8 arrowY = (displayLine == 0) ? 1 : ySpacing * displayLine;
+                                u8 arrowY = (displayLine == 0) ? 0 : ySpacing * displayLine;
                                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, (lineIconStart == 0 ? 19 : 5) + 33 * iconIndex, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
                             }
 
@@ -2817,6 +3236,8 @@ static void DisplayMonTypeMatchupsText()
             ++lineIndex;
         }
     }
+
+    DisplayMonTypeMatchupAbilityEffects(sPokedexMenu->listScrollAmount, color, ySpacing);
 
     PutWindowTilemap(WIN_MON_PAGE_CONTENT);
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
@@ -4763,6 +5184,7 @@ static void MonTypeMatchups_HandleInput(u8 taskId)
     if(JOY_NEW(A_BUTTON))
     {
         sPokedexMenu->typeDetailsType = GetTypeMatchupTypeAtIndex(sPokedexMenu->typeMatchupSelectedIndex);
+        sPokedexMenu->typeDetailsSelectedIndex = 0;
         sPokedexMenu->listScrollAmount = 0;
         sPokedexMenu->desiredPage = PAGE_MON_TYPE_DETAILS;
         gTasks[taskId].func = Task_SwapToPage;
@@ -4805,12 +5227,23 @@ static void MonTypeMatchups_HandleInput(u8 taskId)
     }
     else if(JOY_REPEAT(DPAD_DOWN))
     {
-        if(sPokedexMenu->typeMatchupSelectedIndex >= total - 1)
-            sPokedexMenu->typeMatchupSelectedIndex = 0;
+        // Once the final matchup is selected, continue scrolling through the
+        // Ability Effects section before wrapping the selection back to the top.
+        if(sPokedexMenu->typeMatchupSelectedIndex >= total - 1
+           && sPokedexMenu->listScrollAmount < GetMaxTypeMatchupScrollOffset())
+        {
+            ++sPokedexMenu->listScrollAmount;
+        }
         else
-            ++sPokedexMenu->typeMatchupSelectedIndex;
+        {
+            if(sPokedexMenu->typeMatchupSelectedIndex >= total - 1)
+                sPokedexMenu->typeMatchupSelectedIndex = 0;
+            else
+                ++sPokedexMenu->typeMatchupSelectedIndex;
 
-        UpdateTypeMatchupSelectionScroll();
+            UpdateTypeMatchupSelectionScroll();
+        }
+
         PlaySE(SE_DEX_SCROLL);
         DisplayMonTypeMatchupsText();
     }
@@ -4818,6 +5251,8 @@ static void MonTypeMatchups_HandleInput(u8 taskId)
 
 static void MonTypeDetails_HandleInput(u8 taskId)
 {
+    u8 total = GetTypeDetailsSelectableCount(sPokedexMenu->typeDetailsType);
+
     if(JOY_NEW(B_BUTTON))
     {
         sPokedexMenu->desiredPage = PAGE_MON_TYPE_MATCHUPS;
@@ -4826,39 +5261,52 @@ static void MonTypeDetails_HandleInput(u8 taskId)
         return;
     }
 
+    if(total == 0)
+    {
+        if(JOY_NEW(DPAD_UP) || JOY_NEW(DPAD_DOWN) || JOY_NEW(DPAD_LEFT) || JOY_NEW(DPAD_RIGHT) || JOY_NEW(A_BUTTON))
+            PlaySE(SE_FAILURE);
+        return;
+    }
+
+    if(JOY_NEW(A_BUTTON))
+    {
+        u8 selectedType = GetTypeDetailsSelectableTypeAtIndex(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsSelectedIndex);
+
+        if(selectedType != TYPE_MYSTERY)
+        {
+            sPokedexMenu->typeDetailsType = selectedType;
+            sPokedexMenu->typeDetailsSelectedIndex = 0;
+            sPokedexMenu->listScrollAmount = 0;
+            sPokedexMenu->desiredPage = PAGE_MON_TYPE_DETAILS;
+            gTasks[taskId].func = Task_SwapToPage;
+            PlaySE(SE_PIN);
+        }
+        return;
+    }
+
+    // Type Details uses Up/Down only for type selection, matching the
+    // Type Matchups selector. Left/Right are intentionally not used here.
     if(JOY_REPEAT(DPAD_UP))
     {
-        u16 maxScrollOffset = GetTypeDetailsMaxScrollOffset(sPokedexMenu->typeDetailsType);
-
-        if(maxScrollOffset == 0)
-            PlaySE(SE_FAILURE);
+        if(sPokedexMenu->typeDetailsSelectedIndex == 0)
+            sPokedexMenu->typeDetailsSelectedIndex = total - 1;
         else
-        {
-            if(sPokedexMenu->listScrollAmount == 0)
-                sPokedexMenu->listScrollAmount = maxScrollOffset;
-            else
-                --sPokedexMenu->listScrollAmount;
+            --sPokedexMenu->typeDetailsSelectedIndex;
 
-            PlaySE(SE_DEX_SCROLL);
-            DisplayMonTypeDetailsText();
-        }
+        UpdateTypeDetailsSelectionScroll();
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonTypeDetailsText();
     }
     else if(JOY_REPEAT(DPAD_DOWN))
     {
-        u16 maxScrollOffset = GetTypeDetailsMaxScrollOffset(sPokedexMenu->typeDetailsType);
-
-        if(maxScrollOffset == 0)
-            PlaySE(SE_FAILURE);
+        if(sPokedexMenu->typeDetailsSelectedIndex >= total - 1)
+            sPokedexMenu->typeDetailsSelectedIndex = 0;
         else
-        {
-            if(sPokedexMenu->listScrollAmount == maxScrollOffset)
-                sPokedexMenu->listScrollAmount = 0;
-            else
-                ++sPokedexMenu->listScrollAmount;
+            ++sPokedexMenu->typeDetailsSelectedIndex;
 
-            PlaySE(SE_DEX_SCROLL);
-            DisplayMonTypeDetailsText();
-        }
+        UpdateTypeDetailsSelectionScroll();
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonTypeDetailsText();
     }
 }
 

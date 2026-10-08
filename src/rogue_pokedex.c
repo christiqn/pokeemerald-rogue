@@ -287,7 +287,7 @@ static const u8 sText_XQuarter[] = _("x1/4");
 static const u8 sText_X0[] = _("x0");
 static const u8 sText_AbilityEffects[] = _("Ability Effects:");
 static const u8 sText_AbilityGround0[] = _(": Ground -> x0");
-static const u8 sText_AbilityElectric0[] = _(": Electric -> x0");
+static const u8 sText_AbilityElectric0[] = _(": Electric ->");
 static const u8 sText_AbilityWater0[] = _(": Water -> x0");
 static const u8 sText_AbilityFire0[] = _(": Fire -> x0");
 static const u8 sText_AbilityGrass0[] = _(": Grass -> x0");
@@ -2666,7 +2666,6 @@ static void GetTypeDetailsSelectionPosition(u8 type, u8 selectedIndex, u8 *line,
     u8 section;
     u8 category;
     u8 i;
-    u8 currentIndex = 0;
     u8 lineIndex = 0;
 
     for(section = 0; section < 2; ++section)
@@ -2858,22 +2857,34 @@ static void DisplayMonTypeDetailsText()
 
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
 
-                            if(currentIndex == sPokedexMenu->typeDetailsSelectedIndex)
-                            {
-                                u8 arrowX = (lineIconStart == 0 ? 19 : 5) + 33 * iconIndex;
-                                u8 arrowY = (displayLine == 0) ? 1 : ySpacing * displayLine - 1;
-                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, arrowX, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
-                            }
-
                             ++displaySprite;
                         }
                     }
                 }
-                currentIndex += iconsOnLine;
-
                 lineIconStart += iconsOnLine;
                 ++lineIndex;
             }
+        }
+    }
+
+    // Draw the selector separately from the icon loop so exactly one arrow is
+    // ever rendered, regardless of duplicate type icons on this page.
+    {
+        u8 selectedLine;
+        u8 selectedIconIndex;
+        bool8 selectedContinuationLine;
+
+        GetTypeDetailsSelectionPosition(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsSelectedIndex,
+            &selectedLine, &selectedIconIndex, &selectedContinuationLine);
+
+        if(selectedLine >= sPokedexMenu->listScrollAmount
+           && selectedLine < sPokedexMenu->listScrollAmount + (MAX_LIST_DISPLAY_COUNT - 2))
+        {
+            u8 selectedDisplayLine = selectedLine - sPokedexMenu->listScrollAmount + 1;
+            u8 arrowX = (selectedContinuationLine ? 5 : 19) + 33 * selectedIconIndex;
+            u8 arrowY = ySpacing * selectedDisplayLine - 1;
+
+            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, arrowX, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
         }
     }
 
@@ -5272,7 +5283,9 @@ static void MonTypeDetails_HandleInput(u8 taskId)
         return;
     }
 
-    if(JOY_REPEAT(DPAD_LEFT))
+    // Type Details uses Up/Down only for type selection, matching the
+    // Type Matchups selector. Left/Right are intentionally not used here.
+    if(JOY_REPEAT(DPAD_UP))
     {
         if(sPokedexMenu->typeDetailsSelectedIndex == 0)
             sPokedexMenu->typeDetailsSelectedIndex = total - 1;
@@ -5283,34 +5296,12 @@ static void MonTypeDetails_HandleInput(u8 taskId)
         PlaySE(SE_DEX_SCROLL);
         DisplayMonTypeDetailsText();
     }
-    else if(JOY_REPEAT(DPAD_RIGHT))
+    else if(JOY_REPEAT(DPAD_DOWN))
     {
         if(sPokedexMenu->typeDetailsSelectedIndex >= total - 1)
             sPokedexMenu->typeDetailsSelectedIndex = 0;
         else
             ++sPokedexMenu->typeDetailsSelectedIndex;
-
-        UpdateTypeDetailsSelectionScroll();
-        PlaySE(SE_DEX_SCROLL);
-        DisplayMonTypeDetailsText();
-    }
-    else if(JOY_REPEAT(DPAD_UP))
-    {
-        if(sPokedexMenu->typeDetailsSelectedIndex >= 3)
-            sPokedexMenu->typeDetailsSelectedIndex -= 3;
-        else
-            sPokedexMenu->typeDetailsSelectedIndex = total - 1;
-
-        UpdateTypeDetailsSelectionScroll();
-        PlaySE(SE_DEX_SCROLL);
-        DisplayMonTypeDetailsText();
-    }
-    else if(JOY_REPEAT(DPAD_DOWN))
-    {
-        if(sPokedexMenu->typeDetailsSelectedIndex + 3 < total)
-            sPokedexMenu->typeDetailsSelectedIndex += 3;
-        else
-            sPokedexMenu->typeDetailsSelectedIndex = 0;
 
         UpdateTypeDetailsSelectionScroll();
         PlaySE(SE_DEX_SCROLL);

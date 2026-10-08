@@ -287,7 +287,7 @@ static const u8 sText_XQuarter[] = _("x1/4");
 static const u8 sText_X0[] = _("x0");
 static const u8 sText_AbilityEffects[] = _("Ability Effects:");
 static const u8 sText_AbilityGround0[] = _(": Ground -> x0");
-static const u8 sText_AbilityElectric0[] = _(": Electric ->");
+static const u8 sText_AbilityElectric0[] = _(": Electric -> x0");
 static const u8 sText_AbilityWater0[] = _(": Water -> x0");
 static const u8 sText_AbilityFire0[] = _(": Fire -> x0");
 static const u8 sText_AbilityGrass0[] = _(": Grass -> x0");
@@ -421,6 +421,7 @@ struct PokedexMenu
     u16 viewBaseSpecies;
     u16 listScrollAmount;
     u8 typeMatchupSelectedIndex;
+    u8 typeDetailsSelectedIndex;
     u8 typeDetailsType;
     u8 partySlot;
     u8 isInspectModeActive : 1;
@@ -2595,6 +2596,146 @@ static u8 GetTypeDetailsTypeAtIndex(u8 type, bool8 isAttack, u8 category, u8 ind
     return TYPE_MYSTERY;
 }
 
+static u8 GetTypeDetailsSelectableCount(u8 type)
+{
+    u8 section;
+    u8 category;
+    u8 count = 0;
+
+    for(section = 0; section < 2; ++section)
+    {
+        for(category = 0; category < 3; ++category)
+            count += GetTypeDetailsCategoryCount(type, section == 0, category);
+    }
+
+    return count;
+}
+
+static u8 GetTypeDetailsSelectableTypeAtIndex(u8 type, u8 index)
+{
+    u8 section;
+    u8 category;
+    u8 i;
+    u8 matchIndex = 0;
+
+    for(section = 0; section < 2; ++section)
+    {
+        for(category = 0; category < 3; ++category)
+        {
+            u8 count = GetTypeDetailsCategoryCount(type, section == 0, category);
+
+            for(i = 0; i < count; ++i)
+            {
+                if(matchIndex == index)
+                    return GetTypeDetailsTypeAtIndex(type, section == 0, category, i);
+                ++matchIndex;
+            }
+        }
+    }
+
+    return TYPE_MYSTERY;
+}
+
+static u8 GetTypeDetailsSelectableIndexForType(u8 type, u8 selectedType)
+{
+    u8 section;
+    u8 category;
+    u8 i;
+    u8 matchIndex = 0;
+
+    for(section = 0; section < 2; ++section)
+    {
+        for(category = 0; category < 3; ++category)
+        {
+            u8 count = GetTypeDetailsCategoryCount(type, section == 0, category);
+
+            for(i = 0; i < count; ++i)
+            {
+                if(GetTypeDetailsTypeAtIndex(type, section == 0, category, i) == selectedType)
+                    return matchIndex;
+                ++matchIndex;
+            }
+        }
+    }
+
+    return 0;
+}
+
+static void GetTypeDetailsSelectionPosition(u8 type, u8 selectedIndex, u8 *line, u8 *iconIndex, bool8 *continuationLine)
+{
+    u8 section;
+    u8 category;
+    u8 i;
+    u8 currentIndex = 0;
+    u8 lineIndex = 0;
+
+    for(section = 0; section < 2; ++section)
+    {
+        ++lineIndex; // Section header.
+
+        for(category = 0; category < 3; ++category)
+        {
+            u8 count = GetTypeDetailsCategoryCount(type, section == 0, category);
+            u8 row;
+
+            if(count == 0)
+                continue;
+
+            for(row = 0; row < (count + 2) / 3; ++row)
+            {
+                u8 rowCount = min(count - row * 3, 3);
+
+                for(i = 0; i < rowCount; ++i)
+                {
+                    if(currentIndex == selectedIndex)
+                    {
+                        *line = lineIndex;
+                        *iconIndex = i;
+                        *continuationLine = row != 0;
+                        return;
+                    }
+                    ++currentIndex;
+                }
+
+                ++lineIndex;
+            }
+        }
+    }
+
+    *line = 0;
+    *iconIndex = 0;
+    *continuationLine = FALSE;
+}
+
+static void UpdateTypeDetailsSelectionScroll()
+{
+    u8 total = GetTypeDetailsSelectableCount(sPokedexMenu->typeDetailsType);
+    u8 selectedLine;
+    u8 iconIndex;
+    bool8 continuationLine;
+    u16 maxScrollOffset = GetTypeDetailsMaxScrollOffset(sPokedexMenu->typeDetailsType);
+    u8 visibleLines = MAX_LIST_DISPLAY_COUNT - 2;
+
+    if(total == 0)
+    {
+        sPokedexMenu->typeDetailsSelectedIndex = 0;
+        sPokedexMenu->listScrollAmount = 0;
+        return;
+    }
+
+    if(sPokedexMenu->typeDetailsSelectedIndex >= total)
+        sPokedexMenu->typeDetailsSelectedIndex = total - 1;
+
+    GetTypeDetailsSelectionPosition(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsSelectedIndex, &selectedLine, &iconIndex, &continuationLine);
+    (void)iconIndex;
+    (void)continuationLine;
+
+    if(selectedLine < sPokedexMenu->listScrollAmount)
+        sPokedexMenu->listScrollAmount = selectedLine;
+    else if(selectedLine >= sPokedexMenu->listScrollAmount + visibleLines)
+        sPokedexMenu->listScrollAmount = min(maxScrollOffset, selectedLine - visibleLines + 1);
+}
+
 static u8 GetTypeDetailsLineCount(u8 type)
 {
     u8 section;
@@ -2638,8 +2779,11 @@ static void DisplayMonTypeDetailsText()
     u8 typeCount;
     u8 iconIndex;
     u8 lineIconStart;
+    u8 currentIndex = 0;
     u8 selectedType = sPokedexMenu->typeDetailsType;
     u8 const ySpacing = 16;
+
+    UpdateTypeDetailsSelectionScroll();
     u8 const color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_BLUE, TEXT_COLOR_LIGHT_GRAY };
     const u8 *sectionText;
     const u8 *multiplierText;
@@ -2713,10 +2857,19 @@ static void DisplayMonTypeDetailsText()
                                 iconX = 109 + 33 * iconIndex;
 
                             sPokedexMenu->pageSprites[MON_SPRITE_MATCHUP1 + displaySprite] = CreateMonTypeIcon(typeIndex, iconX, iconY);
+
+                            if(currentIndex == sPokedexMenu->typeDetailsSelectedIndex)
+                            {
+                                u8 arrowX = (lineIconStart == 0 ? 19 : 5) + 33 * iconIndex;
+                                u8 arrowY = (displayLine == 0) ? 1 : ySpacing * displayLine - 1;
+                                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, arrowX, arrowY, 0, 0, color, TEXT_SKIP_DRAW, gText_SelectorArrow);
+                            }
+
                             ++displaySprite;
                         }
                     }
                 }
+                currentIndex += iconsOnLine;
 
                 lineIconStart += iconsOnLine;
                 ++lineIndex;
@@ -5019,6 +5172,7 @@ static void MonTypeMatchups_HandleInput(u8 taskId)
     if(JOY_NEW(A_BUTTON))
     {
         sPokedexMenu->typeDetailsType = GetTypeMatchupTypeAtIndex(sPokedexMenu->typeMatchupSelectedIndex);
+        sPokedexMenu->typeDetailsSelectedIndex = GetTypeDetailsSelectableIndexForType(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsType);
         sPokedexMenu->listScrollAmount = 0;
         sPokedexMenu->desiredPage = PAGE_MON_TYPE_DETAILS;
         gTasks[taskId].func = Task_SwapToPage;
@@ -5085,6 +5239,8 @@ static void MonTypeMatchups_HandleInput(u8 taskId)
 
 static void MonTypeDetails_HandleInput(u8 taskId)
 {
+    u8 total = GetTypeDetailsSelectableCount(sPokedexMenu->typeDetailsType);
+
     if(JOY_NEW(B_BUTTON))
     {
         sPokedexMenu->desiredPage = PAGE_MON_TYPE_MATCHUPS;
@@ -5093,39 +5249,72 @@ static void MonTypeDetails_HandleInput(u8 taskId)
         return;
     }
 
-    if(JOY_REPEAT(DPAD_UP))
+    if(total == 0)
     {
-        u16 maxScrollOffset = GetTypeDetailsMaxScrollOffset(sPokedexMenu->typeDetailsType);
-
-        if(maxScrollOffset == 0)
+        if(JOY_NEW(DPAD_UP) || JOY_NEW(DPAD_DOWN) || JOY_NEW(DPAD_LEFT) || JOY_NEW(DPAD_RIGHT) || JOY_NEW(A_BUTTON))
             PlaySE(SE_FAILURE);
-        else
-        {
-            if(sPokedexMenu->listScrollAmount == 0)
-                sPokedexMenu->listScrollAmount = maxScrollOffset;
-            else
-                --sPokedexMenu->listScrollAmount;
+        return;
+    }
 
-            PlaySE(SE_DEX_SCROLL);
-            DisplayMonTypeDetailsText();
+    if(JOY_NEW(A_BUTTON))
+    {
+        u8 selectedType = GetTypeDetailsSelectableTypeAtIndex(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsSelectedIndex);
+
+        if(selectedType != TYPE_MYSTERY)
+        {
+            sPokedexMenu->typeDetailsType = selectedType;
+            sPokedexMenu->typeDetailsSelectedIndex = GetTypeDetailsSelectableIndexForType(selectedType, selectedType);
+            sPokedexMenu->listScrollAmount = 0;
+            sPokedexMenu->desiredPage = PAGE_MON_TYPE_DETAILS;
+            gTasks[taskId].func = Task_SwapToPage;
+            PlaySE(SE_PIN);
         }
+        return;
+    }
+
+    if(JOY_REPEAT(DPAD_LEFT))
+    {
+        if(sPokedexMenu->typeDetailsSelectedIndex == 0)
+            sPokedexMenu->typeDetailsSelectedIndex = total - 1;
+        else
+            --sPokedexMenu->typeDetailsSelectedIndex;
+
+        UpdateTypeDetailsSelectionScroll();
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonTypeDetailsText();
+    }
+    else if(JOY_REPEAT(DPAD_RIGHT))
+    {
+        if(sPokedexMenu->typeDetailsSelectedIndex >= total - 1)
+            sPokedexMenu->typeDetailsSelectedIndex = 0;
+        else
+            ++sPokedexMenu->typeDetailsSelectedIndex;
+
+        UpdateTypeDetailsSelectionScroll();
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonTypeDetailsText();
+    }
+    else if(JOY_REPEAT(DPAD_UP))
+    {
+        if(sPokedexMenu->typeDetailsSelectedIndex >= 3)
+            sPokedexMenu->typeDetailsSelectedIndex -= 3;
+        else
+            sPokedexMenu->typeDetailsSelectedIndex = total - 1;
+
+        UpdateTypeDetailsSelectionScroll();
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonTypeDetailsText();
     }
     else if(JOY_REPEAT(DPAD_DOWN))
     {
-        u16 maxScrollOffset = GetTypeDetailsMaxScrollOffset(sPokedexMenu->typeDetailsType);
-
-        if(maxScrollOffset == 0)
-            PlaySE(SE_FAILURE);
+        if(sPokedexMenu->typeDetailsSelectedIndex + 3 < total)
+            sPokedexMenu->typeDetailsSelectedIndex += 3;
         else
-        {
-            if(sPokedexMenu->listScrollAmount == maxScrollOffset)
-                sPokedexMenu->listScrollAmount = 0;
-            else
-                ++sPokedexMenu->listScrollAmount;
+            sPokedexMenu->typeDetailsSelectedIndex = 0;
 
-            PlaySE(SE_DEX_SCROLL);
-            DisplayMonTypeDetailsText();
-        }
+        UpdateTypeDetailsSelectionScroll();
+        PlaySE(SE_DEX_SCROLL);
+        DisplayMonTypeDetailsText();
     }
 }
 

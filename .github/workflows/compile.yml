@@ -55,7 +55,7 @@ jobs:
           COMPARE: 0
           RELEASE: 1
         if: ${{ !inputs.debug_version }}
-        run: make -j1 -O all
+        run: make -j${nproc} -O all
 
       - name: Modern Debug
         env:
@@ -63,7 +63,7 @@ jobs:
           COMPARE: 0
           RELEASE: 0
         if: ${{ inputs.debug_version }}
-        run: make -j1 -O all
+        run: make -j${nproc} -O all
 
       - name: Test
         env:

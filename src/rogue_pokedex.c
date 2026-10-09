@@ -2831,6 +2831,13 @@ static void UpdateTypeDetailsSelectionScroll()
     if(sPokedexMenu->typeDetailsSelectedIndex >= total)
         sPokedexMenu->typeDetailsSelectedIndex = total - 1;
 
+    // Keep the section header at the top whenever the first type is selected.
+    if(sPokedexMenu->typeDetailsSelectedIndex == 0)
+    {
+        sPokedexMenu->listScrollAmount = 0;
+        return;
+    }
+
     GetTypeDetailsSelectionPosition(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsSelectedIndex, &selectedLine, &iconIndex, &continuationLine);
     (void)iconIndex;
     (void)continuationLine;

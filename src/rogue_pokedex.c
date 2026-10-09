@@ -1976,6 +1976,9 @@ static void DisplayMonMovesText()
 static void DisplayMonMoveSetsText()
 {
     u8 i;
+    u8 j;
+    u8 moveCount;
+    u16 moveIds[MAX_MON_MOVES];
     u8 line = 0;
     u8 color[3] = { TEXT_COLOR_TRANSPARENT, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY };
     u16 species = sPokedexMenu->viewBaseSpecies;
@@ -2020,17 +2023,32 @@ static void DisplayMonMoveSetsText()
         StringExpandPlaceholders(gStringVar4, sText_MoveSetNature);
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
 
-        // Moves
+        // Moves: sort alphabetically for easier comparison between sets.
+        moveCount = 0;
         for(i = 0; i < MAX_MON_MOVES; ++i)
         {
-            u16 moveId = preset->moves[i];
+            if(preset->moves[i] != MOVE_NONE)
+                moveIds[moveCount++] = preset->moves[i];
+        }
 
-            if(moveId != MOVE_NONE)
+        for(i = 1; i < moveCount; ++i)
+        {
+            u16 moveId = moveIds[i];
+
+            j = i;
+            while(j > 0 && StringCompare(gMoveNames[moveIds[j - 1]], gMoveNames[moveId]) > 0)
             {
-                StringCopy(gStringVar1, gMoveNames[moveId]);
-                StringExpandPlaceholders(gStringVar4, sText_MoveSetMove);
-                AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+                moveIds[j] = moveIds[j - 1];
+                --j;
             }
+            moveIds[j] = moveId;
+        }
+
+        for(i = 0; i < moveCount; ++i)
+        {
+            StringCopy(gStringVar1, gMoveNames[moveIds[i]]);
+            StringExpandPlaceholders(gStringVar4, sText_MoveSetMove);
+            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
         }
     }
 
@@ -2830,6 +2848,13 @@ static void UpdateTypeDetailsSelectionScroll()
 
     if(sPokedexMenu->typeDetailsSelectedIndex >= total)
         sPokedexMenu->typeDetailsSelectedIndex = total - 1;
+
+    // Keep the section header at the top whenever the first type is selected.
+    if(sPokedexMenu->typeDetailsSelectedIndex == 0)
+    {
+        sPokedexMenu->listScrollAmount = 0;
+        return;
+    }
 
     GetTypeDetailsSelectionPosition(sPokedexMenu->typeDetailsType, sPokedexMenu->typeDetailsSelectedIndex, &selectedLine, &iconIndex, &continuationLine);
     (void)iconIndex;

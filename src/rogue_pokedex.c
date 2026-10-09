@@ -2044,7 +2044,7 @@ static void DisplayMonMoveSetsText()
         ConvertUIntToDecimalStringN(gStringVar2, pokemonProfile->competitiveSetCount, STR_CONV_MODE_LEFT_ALIGN, 3);
         StringExpandPlaceholders(gStringVar4, sText_MoveSetCounter);
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 0, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
-        if(pinnedIndexPlusOne != 0 && pinnedIndexPlusOne <= pokemonProfile->competitiveSetCount)
+        if(pinnedIndexPlusOne == actualIndex + 1)
             AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 92, 0, 0, 0, color, TEXT_SKIP_DRAW, sText_MoveSetPinned);
         line = 1;
 

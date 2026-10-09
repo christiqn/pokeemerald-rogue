@@ -289,6 +289,11 @@ struct RogueRunData
     u8 lastShopVisitDifficulty[ROGUE_SHOP_COUNT];
     u8 activeEvoItemFlags[8];
     u8 activeFormItemFlags[20]; // technically this isn't needed for Vanilla
+    
+    // Per-species pinned suggested-set index + 1; zero means no pinned set.
+    // This is run data and is cleared automatically when a new run begins.
+    u8 pinnedCompetitiveSets[NUM_SPECIES];
+
     union
     {
         struct RogueCampaignData_Generic generic;

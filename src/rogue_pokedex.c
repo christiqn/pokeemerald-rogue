@@ -188,6 +188,7 @@ static const u8 sTitle_Stats[] = _("Stats");
 static const u8 sTitle_Moves[] = _("Moves");
 static const u8 sTitle_MoveSets[] = _("Suggested Sets");
 static const u8 sText_MoveSetCounter[] = _("Set {STR_VAR_1}/{STR_VAR_2}");
+static const u8 sText_MoveSetPinned[] = _("PINNED");
 static const u8 sText_MoveSetAbility[] = _("Ability: {STR_VAR_1}");
 static const u8 sText_MoveSetItem[] = _("Item: {STR_VAR_1}");
 static const u8 sText_MoveSetNature[] = _("Nature: {STR_VAR_1}");
@@ -245,6 +246,7 @@ static const u8 sTitle_Stats[] = _("STATS");
 static const u8 sTitle_Moves[] = _("MOVES");
 static const u8 sTitle_MoveSets[] = _("SUGGESTED SETS");
 static const u8 sText_MoveSetCounter[] = _("SET {STR_VAR_1}/{STR_VAR_2}");
+static const u8 sText_MoveSetPinned[] = _("PINNED");
 static const u8 sText_MoveSetAbility[] = _("ABILITY: {STR_VAR_1}");
 static const u8 sText_MoveSetItem[] = _("ITEM: {STR_VAR_1}");
 static const u8 sText_MoveSetNature[] = _("NATURE: {STR_VAR_1}");
@@ -1973,6 +1975,46 @@ static void DisplayMonMovesText()
     CopyWindowToVram(WIN_MON_PAGE_CONTENT, COPYWIN_FULL);
 }
 
+// Store the pinned set as its original index + 1; zero means no pin.
+static u16 GetDisplayedMoveSetIndex(u16 species, u16 displayIndex, u16 total)
+{
+    u8 pinnedIndexPlusOne = gRogueRun.pinnedCompetitiveSets[species];
+    u16 pinnedIndex;
+
+    if(pinnedIndexPlusOne == 0)
+        return displayIndex;
+
+    pinnedIndex = pinnedIndexPlusOne - 1;
+    if(pinnedIndex >= total)
+        return displayIndex;
+
+    if(displayIndex == 0)
+        return pinnedIndex;
+    if(displayIndex <= pinnedIndex)
+        return displayIndex - 1;
+
+    return displayIndex;
+}
+
+static void TogglePinnedMoveSet(u16 species, u16 displayIndex, u16 total)
+{
+    u16 actualIndex = GetDisplayedMoveSetIndex(species, displayIndex, total);
+    u8 pinnedIndexPlusOne = gRogueRun.pinnedCompetitiveSets[species];
+
+    if(pinnedIndexPlusOne == actualIndex + 1)
+    {
+        // Unpin the selected set and keep it selected at its original position.
+        gRogueRun.pinnedCompetitiveSets[species] = 0;
+        sPokedexMenu->listScrollAmount = actualIndex;
+    }
+    else
+    {
+        // Pin this set; it becomes the first displayed set.
+        gRogueRun.pinnedCompetitiveSets[species] = actualIndex + 1;
+        sPokedexMenu->listScrollAmount = 0;
+    }
+}
+
 static void DisplayMonMoveSetsText()
 {
     u8 i;
@@ -1994,12 +2036,16 @@ static void DisplayMonMoveSetsText()
     }
     else
     {
-        struct RoguePokemonCompetitiveSet const* preset = &pokemonProfile->competitiveSets[sPokedexMenu->listScrollAmount];
+        u16 actualIndex = GetDisplayedMoveSetIndex(species, sPokedexMenu->listScrollAmount, pokemonProfile->competitiveSetCount);
+        u8 pinnedIndexPlusOne = gRogueRun.pinnedCompetitiveSets[species];
+        struct RoguePokemonCompetitiveSet const* preset = &pokemonProfile->competitiveSets[actualIndex];
 
         ConvertUIntToDecimalStringN(gStringVar1, sPokedexMenu->listScrollAmount + 1, STR_CONV_MODE_LEFT_ALIGN, 2);
         ConvertUIntToDecimalStringN(gStringVar2, pokemonProfile->competitiveSetCount, STR_CONV_MODE_LEFT_ALIGN, 3);
         StringExpandPlaceholders(gStringVar4, sText_MoveSetCounter);
         AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 0, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+        if(pinnedIndexPlusOne != 0 && pinnedIndexPlusOne <= pokemonProfile->competitiveSetCount)
+            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 92, 0, 0, 0, color, TEXT_SKIP_DRAW, sText_MoveSetPinned);
         line = 1;
 
         // Ability
@@ -4960,6 +5006,14 @@ static void MonMoveSets_HandleInput(u8 taskId)
 {
     struct RoguePokemonProfile const* pokemonProfile = Rogue_GetPokemonProfile(sPokedexMenu->viewBaseSpecies);
     u16 total = pokemonProfile->competitiveSetCount;
+
+    if(JOY_NEW(SELECT_BUTTON) && total != 0)
+    {
+        TogglePinnedMoveSet(sPokedexMenu->viewBaseSpecies, sPokedexMenu->listScrollAmount, total);
+        PlaySE(SE_SELECT);
+        DisplayMonMoveSetsText();
+        return;
+    }
 
     if(JOY_NEW(A_BUTTON) || JOY_NEW(B_BUTTON))
     {

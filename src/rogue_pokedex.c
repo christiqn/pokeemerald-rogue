@@ -1990,7 +1990,7 @@ static void DisplayMonMoveSetsText()
 
     if(pokemonProfile->competitiveSetCount == 0)
     {
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 0, 0, 0, color, TEXT_SKIP_DRAW, sText_MoveSetNoData);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 0, 0, 0, color, TEXT_SKIP_DRAW, sText_MoveSetNoData);
     }
     else
     {
@@ -2008,7 +2008,7 @@ static void DisplayMonMoveSetsText()
         else
             StringCopyN(gStringVar1, gAbilityNames[preset->ability], ABILITY_NAME_LENGTH);
         StringExpandPlaceholders(gStringVar4, sText_MoveSetAbility);
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
 
         // Item
         if(preset->heldItem == ITEM_NONE)
@@ -2016,12 +2016,12 @@ static void DisplayMonMoveSetsText()
         else
             StringCopyN(gStringVar1, ItemId_GetName(preset->heldItem), ITEM_NAME_LENGTH);
         StringExpandPlaceholders(gStringVar4, sText_MoveSetItem);
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
 
         // Nature
         StringCopy(gStringVar1, gNatureNamePointers[preset->nature]);
         StringExpandPlaceholders(gStringVar4, sText_MoveSetNature);
-        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+        AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
 
         // Moves: sort alphabetically for easier comparison between sets.
         moveCount = 0;
@@ -2048,7 +2048,7 @@ static void DisplayMonMoveSetsText()
         {
             StringCopy(gStringVar1, gMoveNames[moveIds[i]]);
             StringExpandPlaceholders(gStringVar4, sText_MoveSetMove);
-            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
+            AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_SMALL_NARROW, 4, 16 * line++, 0, 0, color, TEXT_SKIP_DRAW, gStringVar4);
         }
     }
 
@@ -4961,9 +4961,25 @@ static void MonMoveSets_HandleInput(u8 taskId)
     struct RoguePokemonProfile const* pokemonProfile = Rogue_GetPokemonProfile(sPokedexMenu->viewBaseSpecies);
     u16 total = pokemonProfile->competitiveSetCount;
 
-    if(JOY_NEW(B_BUTTON))
+    if(JOY_NEW(A_BUTTON) || JOY_NEW(B_BUTTON))
     {
         sPokedexMenu->desiredPage = PAGE_MON_MOVES;
+        gTasks[taskId].func = Task_SwapToPage;
+        PlaySE(SE_PIN);
+        return;
+    }
+
+    // Suggested Sets is a subpage: left/right skip Moves and go to Stats/Evolutions.
+    if(JOY_REPEAT(DPAD_LEFT))
+    {
+        sPokedexMenu->desiredPage = PAGE_MON_STATS;
+        gTasks[taskId].func = Task_SwapToPage;
+        PlaySE(SE_PIN);
+        return;
+    }
+    else if(JOY_REPEAT(DPAD_RIGHT))
+    {
+        sPokedexMenu->desiredPage = PAGE_MON_EVOS;
         gTasks[taskId].func = Task_SwapToPage;
         PlaySE(SE_PIN);
         return;

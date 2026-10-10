@@ -8846,7 +8846,8 @@ void ReturnToPartyMenuSubMenuInBattle(u8 slot)
     gPartyMenu.slotId = slot;
     InitPartyMenu(PARTY_MENU_TYPE_IN_BATTLE, GetPartyLayoutFromBattleType(), partyAction, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_SetUpReshowBattleScreenAfterMenu);
     ReshowBattleScreenDummy();
-    UpdatePartyToBattleOrder();
+    // The Pokédex is opened without closing the battle party menu normally,
+    // so the party is already in battle order. Do not reorder it a second time.
 }
 
 static void Task_ChooseMonForMoveRelearner(u8 taskId)

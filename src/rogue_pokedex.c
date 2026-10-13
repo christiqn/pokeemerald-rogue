@@ -110,6 +110,14 @@ enum
     MON_SPRITE_MATCHUP16,
     MON_SPRITE_MATCHUP17,
     MON_SPRITE_MATCHUP18,
+    MON_SPRITE_MOVE_TYPE1,
+    MON_SPRITE_MOVE_TYPE2,
+    MON_SPRITE_MOVE_TYPE3,
+    MON_SPRITE_MOVE_TYPE4,
+    MON_SPRITE_MOVE_TYPE5,
+    MON_SPRITE_MOVE_TYPE6,
+    MON_SPRITE_MOVE_TYPE7,
+    MON_SPRITE_MOVE_TYPE8,
     MON_SPRITE_COUNT,
 };
 
@@ -1809,6 +1817,17 @@ static void DisplayMonMovesText()
     bool32 hasRevisedLevelMoves = Rogue_HasSpeciesBeenRevised(species, REVISION_FLAG_LEARN_MOVES);
     bool32 hasRevisedTutorMoves = Rogue_HasSpeciesBeenRevised(species, REVISION_FLAG_TUTOR_MOVES);
 
+    // Recreate the row type icons whenever the move list scrolls.
+    for (i = 0; i < MAX_LIST_DISPLAY_COUNT; ++i)
+    {
+        u8 spriteId = sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + i];
+        if (spriteId != SPRITE_NONE)
+        {
+            DestroyMonTypIcon(spriteId);
+            sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + i] = SPRITE_NONE;
+        }
+    }
+
     AddTitleText(sTitle_Moves);
 
     FillWindowPixelBuffer(WIN_MON_PAGE_CONTENT, PIXEL_FILL(0));
@@ -1823,13 +1842,16 @@ static void DisplayMonMovesText()
             
             for (i = 0; i < customMoveCount; i++)
             {
+                u16 moveId = RogueGift_GetCustomMonMove(customMonId, i);
+
                 // Is custom move
-                StringCopy(gStringVar1, gMoveNames[RogueGift_GetCustomMonMove(customMonId, i)]);
+                StringCopy(gStringVar1, gMoveNames[moveId]);
                 StringExpandPlaceholders(gStringVar3, gText_PokedexMovesCustom);
                 
                 if(listIndex >= sPokedexMenu->listScrollAmount)
                 {
                     AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar3);
+                    sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 200, 24 + ySpacing * displayCount);
                     ++displayCount;
                 }
                 ++listIndex;
@@ -1866,6 +1888,7 @@ static void DisplayMonMovesText()
                 }
 
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, xCoord, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar3);
+                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[pokemonProfile->levelUpMoves[i].move].type, 200, 24 + ySpacing * displayCount);
                 ++displayCount;
             }
             ++listIndex;
@@ -1899,6 +1922,7 @@ static void DisplayMonMovesText()
                 StringExpandPlaceholders(gStringVar2, gText_PokedexMovesTR);
 
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, xCoord, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar2);
+                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 200, 24 + ySpacing * displayCount);
                 ++displayCount;
             }
             ++listIndex;
@@ -1932,6 +1956,7 @@ static void DisplayMonMovesText()
                 StringExpandPlaceholders(gStringVar2, gText_PokedexMovesTM);
 
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, xCoord, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar2);
+                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 200, 24 + ySpacing * displayCount);
                 ++displayCount;
             }
             ++listIndex;
@@ -1965,6 +1990,7 @@ static void DisplayMonMovesText()
                 StringExpandPlaceholders(gStringVar2, gText_PokedexMovesTutor);
 
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, xCoord, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar2);
+                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 200, 24 + ySpacing * displayCount);
                 ++displayCount;
             }
             ++listIndex;
@@ -4734,12 +4760,23 @@ static void MonInfo_DestroySprites()
             case MON_SPRITE_MATCHUP16:
             case MON_SPRITE_MATCHUP17:
             case MON_SPRITE_MATCHUP18:
+            case MON_SPRITE_MOVE_TYPE1:
+            case MON_SPRITE_MOVE_TYPE2:
+            case MON_SPRITE_MOVE_TYPE3:
+            case MON_SPRITE_MOVE_TYPE4:
+            case MON_SPRITE_MOVE_TYPE5:
+            case MON_SPRITE_MOVE_TYPE6:
+            case MON_SPRITE_MOVE_TYPE7:
+            case MON_SPRITE_MOVE_TYPE8:
                 DestroyMonTypIcon(spriteId);
                 break;
                 
             default:
                 break;
             }
+
+            // Clear destroyed sprite IDs so a later page refresh cannot destroy a reused sprite.
+            sPokedexMenu->pageSprites[i] = SPRITE_NONE;
         }
     }
 }

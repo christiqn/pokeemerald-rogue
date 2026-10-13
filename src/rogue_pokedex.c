@@ -1851,7 +1851,7 @@ static void DisplayMonMovesText()
                 if(listIndex >= sPokedexMenu->listScrollAmount)
                 {
                     AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, 4, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar3);
-                    sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 200, 24 + ySpacing * displayCount);
+                    sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 197, 23 + ySpacing * displayCount);
                     ++displayCount;
                 }
                 ++listIndex;
@@ -1888,7 +1888,7 @@ static void DisplayMonMovesText()
                 }
 
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, xCoord, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar3);
-                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[pokemonProfile->levelUpMoves[i].move].type, 200, 24 + ySpacing * displayCount);
+                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[pokemonProfile->levelUpMoves[i].move].type, 197, 23 + ySpacing * displayCount);
                 ++displayCount;
             }
             ++listIndex;
@@ -1922,7 +1922,7 @@ static void DisplayMonMovesText()
                 StringExpandPlaceholders(gStringVar2, gText_PokedexMovesTR);
 
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, xCoord, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar2);
-                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 200, 24 + ySpacing * displayCount);
+                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 197, 23 + ySpacing * displayCount);
                 ++displayCount;
             }
             ++listIndex;
@@ -1956,7 +1956,7 @@ static void DisplayMonMovesText()
                 StringExpandPlaceholders(gStringVar2, gText_PokedexMovesTM);
 
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, xCoord, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar2);
-                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 200, 24 + ySpacing * displayCount);
+                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 197, 23 + ySpacing * displayCount);
                 ++displayCount;
             }
             ++listIndex;
@@ -1990,7 +1990,7 @@ static void DisplayMonMovesText()
                 StringExpandPlaceholders(gStringVar2, gText_PokedexMovesTutor);
 
                 AddTextPrinterParameterized4(WIN_MON_PAGE_CONTENT, FONT_NARROW, xCoord, ySpacing * displayCount, 0, 0, color, TEXT_SKIP_DRAW, gStringVar2);
-                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 200, 24 + ySpacing * displayCount);
+                sPokedexMenu->pageSprites[MON_SPRITE_MOVE_TYPE1 + displayCount] = CreateMonTypeIcon(gBattleMoves[moveId].type, 197, 23 + ySpacing * displayCount);
                 ++displayCount;
             }
             ++listIndex;
